@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>視光行動工作站 - 精準辨識版</title>
+  
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tesseract.js (穩定版) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- JsBarcode (純向量 SVG 條碼引擎，手機端與列印 100% 顯示) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1e293b;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      margin: 0;
+      padding: 0;
+      color: #1e293b;
+      padding-bottom: 70px;
+    }
+
+    .top-nav {
+      background: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .top-nav h1 { font-size: 16px; margin: 0; font-weight: bold; }
+    .status-pill { font-size: 11px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 12px; }
+
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      height: 56px;
+      z-index: 50;
+    }
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tab-item.active {
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .tab-content { display: none; padding: 12px; }
+    .tab-content.active { display: block; }
+
+    .app-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-block { width: 100%; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 8px;
+      outline: none;
+      background: white;
+    }
+    .input-field:focus { border-color: var(--accent); }
+
+    .meta-summary {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+    .client-item-card {
+      background: white;
+      border: 1.5px solid #cbd5e1;
+      border-left: 5px solid var(--accent);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .client-item-card:active {
+      transform: scale(0.98);
+      background-color: #f1f5f9;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      z-index: 100;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =========================================================
+       總表 1:1 實體樣板與條碼樣式
+       ========================================================= */
+    .chk {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1px solid #b3afaf;
+      margin-right: 4px;
+      vertical-align: middle;
+      background: #fff;
+    }
+    .target-circle {
+      display: inline-block;
+      width: 38px;
+      height: 38px;
+      border: 1.5px solid #555;
+      border-radius: 50%;
+      position: relative;
+      vertical-align: middle;
+    }
+    .target-circle::after {
+      content: '';
+      position: absolute;
+      top: 5px; left: 5px; right: 5px; bottom: 5px;
+      border: 1.2px solid #555;
+      border-radius: 50%;
+    }
+    .fill-bold { font-weight: bold; }
+    .badge-custom-alert {
+      background-color: #ffebee;
+      color: #c62828;
+      font-weight: bold;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-size: 8.5pt;
+      display: inline-block;
+    }
+
+    #printWrapper { display: none; }
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 6mm 8mm 6mm 8mm;
+      }
+      body { background: white; padding: 0; margin: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .top-nav, .bottom-bar, .tab-content { display: none !important; }
+      #printWrapper { display: block !important; }
+      .print-page-item {
+        page-break-after: always;
+        height: 98vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      .print-sheet {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 11pt;
+        line-height: 1.35;
+      }
+      .header-info-table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
+      .header-info-table td { padding: 4px 2px; font-size: 11.5pt; border: none; vertical-align: bottom; }
+      .main-form-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid #000;
+        border-bottom: none;
+        table-layout: fixed !important;
+      }
+      .main-form-table td, .main-form-table th {
+        border: 1.5px solid #000;
+        padding: 4px 6px;
+        vertical-align: middle;
+      }
+      .footer-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid #000;
+        border-top: 1.5px solid #000;
+      }
+      .footer-table td { border: none; padding: 8px 10px; font-size: 12pt; }
+      .section-separator-top td {
+        border-top: 4px double #000 !important;
+        padding-top: 8px !important;
+      }
+      .discomfort-grid-8 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px 12px;
+        font-size: 10pt;
+      }
+      .status-grid-12 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px 8px;
+        font-size: 11pt;
+      }
+      .grid-item-inline { display: flex; align-items: center; gap: 3px; }
+      .banner-lens-header {
+        background-color: #c0c0c0 !important;
+        color: #000;
+        padding: 4px 10px !important;
+        height: 30px;
+        position: relative;
+        text-align: center;
+      }
+      .banner-lens-title { font-weight: bold; font-size: 11pt; letter-spacing: 2px; }
+      .banner-lens-notice {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 7.5pt;
+        color: #222;
+      }
+      .lens-row-wrapper { padding: 0 !important; vertical-align: top !important; }
+      .lens-row-container { display: flex; width: 100%; height: 100%; min-height: 210px; }
+      .lens-box-od { width: 50% !important; border-right: 2px solid #000 !important; padding: 6px 8px; display: flex; gap: 8px; }
+      .lens-box-os { width: 50% !important; padding: 6px 8px; display: flex; gap: 8px; }
+      .lens-side-info { width: 38%; text-align: center; display: flex; flex-direction: column; align-items: center; }
+      .lens-side-checks { width: 62%; display: flex; flex-direction: column; justify-content: space-between; font-size: 9.5pt; }
+      .lens-check-block { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px dashed #cbd5e1; }
+      .lens-check-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <h1>視光行動工作站</h1>
+    <div id="syncStatus" class="status-pill">連線中...</div>
+  </div>
+
+  <!-- 分頁一：三大要素 OCR 辨識與手動快搜列印 -->
+  <div id="tab-ocr" class="tab-content">
+    <div class="app-card">
+      <div class="card-title">
+        <span>🔍 手動搜尋病患（直接產單列印）</span>
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+        支援輸入：編號、姓名、身分證、電話、生日7碼 (例: 1010101)。
+      </div>
+      
+      <!-- 搜尋列 -->
+      <div style="display: flex; gap: 8px; margin-bottom: 4px; align-items: center;">
+        <div style="position: relative; flex: 1; min-width: 0;">
+          <input type="text" id="ocrManualSearchInput" class="input-field" 
+                 placeholder="輸入編號/姓名/身分證/電話/生日..." 
+                 onkeydown="if(event.key === 'Enter'){ event.preventDefault(); filterManualOcrClients(); }"
+                 oninput="checkOcrClearBtnVisibility()"
+                 style="margin-bottom: 0; padding-right: 32px; font-size: 14.5px; height: 42px;">
+          <span id="clearOcrSearchBtn" onclick="clearManualOcrSearch()" 
+                style="position: absolute; right: 10px; top: 11px; color: #94a3b8; font-weight: bold; cursor: pointer; display: none; font-size: 16px;">✕</span>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="filterManualOcrClients()" style="flex-shrink: 0; padding: 0 16px; white-space: nowrap; font-size: 14px; height: 42px;">
+          🔍 搜尋
+        </button>
+      </div>
+    </div> <!-- ★ 修正：補回手動搜尋卡片的閉合標籤 -->
+
+    <div class="app-card">
+      <div class="card-title">
+        <span>📷 拍照辨識門診名冊 (OCR)</span>
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+        拍攝含【姓名、身分證、病歷號】區塊，系統依「身分證命中」或「三擇二」自動比對並依生日月份排序。
+      </div>
+
+      <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleMultipleOcrUpload(event)">
+      
+      <button class="btn btn-primary btn-block" onclick="document.getElementById('ocrFileInput').click()" style="background: #0284c7;">
+        📷 拍照或選取名冊圖片 (可多張)
+      </button>
+    </div>
+
+    <!-- 比對 / 搜尋結果名單區 -->
+    <div id="ocrResultContainer" style="display: none;">
+      <div class="meta-summary">
+        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+          <span>比對/搜尋結果：共 <b id="ocrMatchCount" style="color: var(--accent); font-size: 16px;">0</b> 位客戶</span>
+          <span style="font-size: 11.5px; color: #64748b;">(點擊卡片立即列印)</span>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span>回診單產出清單 (點擊產生 1:1 實體回診單)</span>
+      </div>
+      <div id="matchedClientList"></div>
+    </div>
+  </div>
+
+  <!-- 分頁二：鏡片照片拍攝 / 上傳 -->
+  <div id="tab-photo" class="tab-content active">
+    <div class="app-card">
+      <div class="card-title">
+        <span>🔍 客戶鏡片照片拍攝 / 上傳</span>
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+        支援輸入：編號 (大小寫通用)、姓名、身分證、電話、生日7碼 (例: 1010101)。
+      </div>
+      
+      <!-- 搜尋列 -->
+      <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+        <div style="position: relative; flex: 1; min-width: 0;">
+          <input type="text" id="clientSearchInput" class="input-field" 
+                 placeholder="輸入編號/姓名/電話/生日7碼..." 
+                 onkeydown="if(event.key === 'Enter'){ event.preventDefault(); filterPhotoClients(); }"
+                 oninput="checkClearBtnVisibility()"
+                 style="margin-bottom: 0; padding-right: 32px; font-size: 14.5px; height: 42px;">
+          <span id="clearSearchBtn" onclick="clearPhotoSearch()" 
+                style="position: absolute; right: 10px; top: 11px; color: #94a3b8; font-weight: bold; cursor: pointer; display: none; font-size: 16px;">✕</span>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="filterPhotoClients()" style="flex-shrink: 0; padding: 0 16px; white-space: nowrap; font-size: 14px; height: 42px;">
+          🔍 搜尋
+        </button>
+      </div>
+
+      <div id="photoSearchResultCount" style="font-size: 12px; color: #475569; margin-bottom: 6px; font-weight: 500; display: none;">
+        搜尋符合：共 0 位客戶
+      </div>
+
+      <div id="photoClientList" style="max-height: calc(100vh - 240px); overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <input type="file" id="mobilePhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMobilePhotoSelected(event)">
+
+  <div class="bottom-bar">
+    <div class="tab-item" onclick="switchMobileTab('tab-ocr', this)">
+      <div>精準 OCR / 產單</div>
+    </div>
+    <div class="tab-item active" onclick="switchMobileTab('tab-photo', this)">
+      <div>鏡片拍照上傳</div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">處理中...</div>
+    <div id="ocrProgress" style="font-size: 12px; margin-top: 6px; opacity: 0.85;"></div>
+  </div>
+
+  <div id="printWrapper"></div>
+
+  <script>
+    const SUPABASE_URL = "https://wycoyydhcaeuabaelwdo.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Y295eWRoY2FldWFiYWVsd2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDk2MDUsImV4cCI6MjEwMzQ4NTYwNX0.fkTge9-CHTIIYhQOfMpEmkRM9vOleM6rGd-h4sYDzjw";
+
+    let supabaseClient = null;
+    let rawClients = [];
+    let customTemplates = [];
+    let currentPhotoTarget = { code: "", eye: "OD" };
+    let ocrWorkerInstance = null;
+
+    if (window.supabase && window.supabase.createClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    async function initMobileApp() {
+      const statusEl = document.getElementById('syncStatus');
+      try {
+        if (!supabaseClient) throw new Error("Supabase 初始化失敗");
+
+        const { data: setRes } = await supabaseClient
+          .from('system_settings')
+          .select('data')
+          .eq('id', 'global_config')
+          .maybeSingle();
+
+        if (setRes && setRes.data && setRes.data.templates) {
+          customTemplates = setRes.data.templates;
+        }
+
+        const { data, error } = await supabaseClient
+          .from('customers')
+          .select('*');
+
+        if (error) throw error;
+
+        rawClients = data || [];
+        statusEl.innerText = `已連線 (${rawClients.length} 筆)`;
+        statusEl.style.background = "#16a34a";
+
+        const photoTabBtn = document.querySelectorAll('.bottom-bar .tab-item')[1];
+        if (typeof switchMobileTab === 'function') {
+          switchMobileTab('tab-photo', photoTabBtn || document.createElement('div'));
+        }
+
+        filterPhotoClients();
+      } catch (err) {
+        console.error("手機版連線初始化錯誤:", err);
+        statusEl.innerText = "連線異常: " + (err.message || err);
+        statusEl.style.background = "#dc2626";
+      }
+    }
+
+    function switchMobileTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (el) el.classList.add('active');
+    }
+
+    // ==========================================
+    // 純 SVG 向量條碼產生器 (列印專用：黑白分明、絕不變黑磚)
+    // ==========================================
+    function getBarcodeSVGHtml(text) {
+      if (!text || String(text).trim() === "") return "";
+      const cleanText = String(text).trim().replace(/\*/g, '');
+      try {
+        const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        if (typeof JsBarcode === "function") {
+          JsBarcode(svgNode, cleanText, {
+            format: "CODE39",
+            width: 1.35,
+            height: 32,
+            displayValue: false,
+            margin: 4,
+            background: "",
+            lineColor: "#000000"
+          });
+          svgNode.setAttribute("style", "max-width: 95%; height: 32px; display: block; margin: 0 auto;");
+          return new XMLSerializer().serializeToString(svgNode);
+        }
+      } catch (e) {
+        console.error("SVG 條碼生成錯誤:", e);
+      }
+      return `<div style="font-weight:bold;">${cleanText}</div>`;
+    }
+
+    // ==========================================
+    // 總表 1:1 實體回診單產生引擎 (嵌入純 SVG 向量條碼)
+    // ==========================================
+    function printSingle1to1Checklist(client) {
+      const daysMap = ["日", "一", "二", "三", "四", "五", "六"];
+      const now = new Date();
+      const weekStr = daysMap[now.getDay()];
+      const checkDateFull = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} (${weekStr})`;
+
+      const clientProd = (client.product || "").trim().toLowerCase();
+      let matchedTpl = customTemplates.find(t => {
+        if (!t.matchProducts) return false;
+        const prods = t.matchProducts.split(',').map(s => s.trim().toLowerCase());
+        return prods.some(pr => pr && clientProd.includes(pr));
+      });
+      if (!matchedTpl) matchedTpl = customTemplates[0] || {};
+
+      const hasOD = Boolean(client.odChangeDate && client.odChangeDate.trim());
+      const hasOS = Boolean(client.osChangeDate && client.osChangeDate.trim());
+      let wearMode = "OU 配戴";
+      if (hasOD && !hasOS) wearMode = "OD 配戴";
+      else if (!hasOD && hasOS) wearMode = "OS 配戴";
+
+      let totalTreatmentStr = client.odDuration || "2年 6月 3天";
+      if (client.firstPickup && client.firstPickup.includes('/')) {
+        const fp = client.firstPickup.split('/');
+        const fpDate = new Date(parseInt(fp[0], 10), parseInt(fp[1], 10) - 1, parseInt(fp[2], 10));
+        if (!isNaN(fpDate.getTime())) {
+          const diffDays = Math.max(0, Math.floor((now.getTime() - fpDate.getTime()) / (1000 * 60 * 60 * 24)));
+          totalTreatmentStr = `${Math.floor(diffDays / 365)}年 ${Math.floor((diffDays % 365) / 30)}月 ${diffDays % 30}天`;
+        }
+      }
+
+      let ageStr = "";
+      if (client.birthday && client.birthday.includes('/')) {
+        const bYear = parseInt(client.birthday.split('/')[0], 10);
+        ageStr = String(now.getFullYear() - 1911 - bYear);
+      }
+
+      const doctorCheckPeriod = 12;
+      let timeDiffStr = "尚未達檢查期";
+      let needALCheck = false;
+
+      const lastAlDateStr = client.alCheckDate || client.lastVisit || "";
+      if (lastAlDateStr && lastAlDateStr.includes('/')) {
+        const lp = lastAlDateStr.split('/');
+        const lpDate = new Date(parseInt(lp[0], 10), parseInt(lp[1], 10) - 1, parseInt(lp[2], 10));
+        if (!isNaN(lpDate.getTime())) {
+          const diffDays = Math.max(0, Math.floor((now.getTime() - lpDate.getTime()) / (1000 * 60 * 60 * 24)));
+          const diffMonths = Math.floor(diffDays / 30);
+          timeDiffStr = `${Math.floor(diffDays / 365)} 年 ${diffMonths % 12}月 ${diffDays % 30}天 前`;
+          if (diffMonths >= doctorCheckPeriod) needALCheck = true;
+        }
+      }
+
+      function getLensInfo(changeDateStr) {
+        if (!changeDateStr || !changeDateStr.includes('/')) return { str: "無資料", advice: "" };
+        const cp = changeDateStr.split('/');
+        const cDate = new Date(parseInt(cp[0], 10), parseInt(cp[1], 10) - 1, parseInt(cp[2], 10));
+        if (isNaN(cDate.getTime())) return { str: "無資料", advice: "" };
+
+        const diffDays = Math.max(0, Math.floor((now.getTime() - cDate.getTime()) / (1000 * 60 * 60 * 24)));
+        const diffMonths = Math.floor(diffDays / 30);
+        const yCnt = Math.floor(diffDays / 365);
+        const mCnt = Math.floor((diffDays % 365) / 30);
+        const dCnt = diffDays % 30;
+
+        const t1 = matchedTpl.threshold1 !== undefined ? matchedTpl.threshold1 : 18;
+        const t2 = matchedTpl.threshold2 !== undefined ? matchedTpl.threshold2 : 24;
+        let adviceResult = "";
+        if (diffMonths >= t2) adviceResult = matchedTpl.adviceText2 || '已超過年限建議換片';
+        else if (diffMonths >= t1) adviceResult = matchedTpl.adviceText1 || '鏡片年限已近建議檢查';
+
+        return { str: `${yCnt}年 ${mCnt}月 ${dCnt}天`, advice: adviceResult };
+      }
+
+      const odLens = getLensInfo(client.odChangeDate);
+      const osLens = getLensInfo(client.osChangeDate);
+
+      const checkItems = ["VA"];
+      if (matchedTpl.needTopo !== false) checkItems.push("TOPO");
+      if (needALCheck) checkItems.push("AL");
+      const hintCheckItemsStr = checkItems.join(" + ");
+
+      const rawDisc = (matchedTpl.discomfortOptions || "").split(',').map(s => s.trim());
+      let discomfortHTML = `<div class="discomfort-grid-8">`;
+      for (let i = 0; i < 8; i++) {
+        const opt = rawDisc[i];
+        discomfortHTML += opt ? `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>` : `<div></div>`;
+      }
+      discomfortHTML += `</div>`;
+
+      const rawOpts = (matchedTpl.statusOptions || "").split(',').map(s => s.trim());
+      let statusOptionsHTML = `<div class="status-grid-12">`;
+      for (let i = 0; i < 12; i++) {
+        const opt = rawOpts[i];
+        statusOptionsHTML += opt ? `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>` : `<div></div>`;
+      }
+      statusOptionsHTML += `</div>`;
+
+      function formatCheckOptions(optsStr) {
+        if (!optsStr) return '';
+        return optsStr.split(',').map(s => s.trim()).filter(Boolean).map(o => `<span class="chk"></span>${o}`).join('&nbsp;&nbsp;');
+      }
+
+      const cleanCode = String(client.code || '').trim();
+      const cleanId = String(client.idNumber || client.code || '').trim();
+
+      const codeBarcodeSvg = getBarcodeSVGHtml(cleanCode);
+      const idBarcodeSvg = getBarcodeSVGHtml(cleanId);
+
+      const fullHTML = `
+        <div class="print-page-item">
+          <div class="print-sheet">
+            <div>
+              <table class="header-info-table">
+                <tr>
+                  <td style="width: 25%;">姓名：<span class="fill-bold" style="font-size: 13pt;">${client.name}</span></td>
+                  <td style="width: 25%;">生日：<span class="fill-bold">${client.birthday || ''}</span></td>
+                  <td style="width: 32%;">檢查日：<span class="fill-bold">${checkDateFull}</span></td>
+                  <td style="width: 18%; text-align: right;">DR. <span class="fill-bold">王醫師</span></td>
+                </tr>
+              </table>
+
+              <table class="main-form-table">
+                <colgroup>
+                  <col style="width: 27%;">
+                  <col style="width: 20%;">
+                  <col style="width: 14%;">
+                  <col style="width: 39%;">
+                  <col style="width: 20%;">
+                </colgroup>
+                <tr style="height: 52px;">
+                  <td style="background: #ffffff !important; vertical-align: middle; padding: 4px 8px; border-right: none; text-align: center;">
+                    <div style="display:flex; justify-content:center; align-items:center; height:34px; max-width:90%; margin:0 auto; overflow:hidden;">
+                      ${codeBarcodeSvg}
+                    </div>
+                    <div style="font-size: 10pt; font-weight: bold; margin-top: 1px;">${cleanCode}</div>
+                  </td>
+                  <td colspan="3" style="background: #e5e7eb !important; text-align: center; font-size: 13.5pt; font-weight: bold; border-left: none; border-right: none;">
+                    ${matchedTpl.titleDisplay || client.product || 'OK塑型片'}
+                  </td>
+                  <td style="background: #e5e7eb !important; text-align: right; font-size: 12pt; font-weight: bold; padding-right: 12px; border-left: none;">
+                    ${wearMode}
+                  </td>
+                </tr>
+                <tr style="height: 48px;">
+                  <td style="font-weight: bold; text-align: center; line-height: 1.25;">
+                    兒控總療程時間<br><span style="font-size: 8.5pt; font-weight: normal;">(非鏡片時間)</span>
+                  </td>
+                  <td style="font-size: 11pt; text-align: center; font-weight: bold;">
+                    ${totalTreatmentStr}
+                  </td>
+                  <td style="font-weight: bold; text-align: center; padding: 2px 2px; font-size: 10.5pt;" rowspan="3">
+                    不適問題<br><br><span class="chk"></span>無
+                  </td>
+                  <td colspan="2" rowspan="3" style="padding: 6px 10px; vertical-align: middle;">
+                    ${discomfortHTML}
+                  </td>
+                </tr>
+                <tr style="height: 45px;">
+                  <td style="font-weight: bold; text-align: center; font-size: 13pt;" rowspan="2">
+                    ${matchedTpl.vaTitle || 'VA'}
+                  </td>
+                  <td style="padding: 4px 6px; font-size: 11pt; height: 40px; text-align: left;"><b>OD</b></td>
+                </tr>
+                <tr style="height: 45px;">
+                  <td style="padding: 4px 6px; font-size: 11pt; height: 40px; text-align: left;"><b>OS</b></td>
+                </tr>
+                <tr style="height: 44px;">
+                  <td style="font-weight: bold; text-align: center; font-size: 11pt;">
+                    ${matchedTpl.wearLabel || '每日配戴時間'}
+                  </td>
+                  <td style="text-align: center; font-size: 11pt; font-weight: bold;">
+                    ${matchedTpl.wearUnit || '小時'}
+                  </td>
+                  <td colspan="3" style="background-color: #fafafa;"></td>
+                </tr>
+                <tr class="section-separator-top" style="height: 48px;">
+                  <td style="background: #ffffff !important; text-align: center; vertical-align: middle; padding: 6px 8px;" rowspan="2">
+                    <div style="display:flex; justify-content:center; align-items:center; height:34px; max-width:90%; margin:0 auto; overflow:hidden;">
+                      ${idBarcodeSvg}
+                    </div>
+                    <div style="font-weight: bold; font-size: 9.5pt; margin-top: 1px;">${cleanId}</div>
+                    <div style="font-weight: bold; margin-top: 2px; font-size: 11pt; background: #e5e7eb !important; border-radius: 2px; padding: 1px 0;">眼軸追蹤</div>
+                    <div style="font-size: 9.5pt; margin-top: 1px;">${ageStr} 歲</div>
+                  </td>
+                  <td colspan="4" style="background: #e5e7eb !important; font-size: 10.5pt; padding: 6px 12px;">
+                    上次紀錄：&nbsp;<span class="fill-bold">${lastAlDateStr}</span>&nbsp;&nbsp;、&nbsp;&nbsp;${timeDiffStr}&nbsp;&nbsp;&nbsp;&nbsp;${needALCheck ? '<span style="color:#d63031;font-weight:bold;">★需檢測</span>' : '<span>未達檢查期</span>'}
+                  </td>
+                </tr>
+                <tr style="height: 85px;">
+                  <td colspan="1" style="padding: 6px 12px; font-size: 11.5pt; vertical-align: middle; width: 40%;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                      <span style="font-weight: bold; width: 35px;">OD:</span>
+                      <span class="fill-bold" style="font-size: 12.5pt;">${client.alOD || '____'}</span>
+                      <span style="font-size: 10pt;">mm</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-weight: bold; width: 35px;">OS:</span>
+                      <span class="fill-bold" style="font-size: 12.5pt;">${client.alOS || '____'}</span>
+                      <span style="font-size: 10pt;">mm</span>
+                    </div>
+                  </td>
+                  <td colspan="3" style="padding: 6px 12px; vertical-align: middle; width: 60%;">
+                    <div style="display: flex; align-items: center; height: 100%; padding: 4px 8px;">
+                      <table style="border: none !important; border-collapse: collapse;">
+                        <tr>
+                          <td style="font-weight: bold; width: 45px; border:none;" rowspan="2">本次</td>
+                          <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OD:</td>
+                          <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
+                          <td style="width: 35px; border:none;">mm</td>
+                        </tr>
+                        <tr>
+                          <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OS:</td>
+                          <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
+                          <td style="width: 35px; border:none;">mm</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="section-separator-top" style="height: 48px;">
+                  <td style="background: #e5e7eb !important; font-weight: bold; text-align: center; font-size: 11pt;">使用 Atropine</td>
+                  <td colspan="4" style="background: #e5e7eb !important; padding: 4px 10px; font-size: 10.5pt;">
+                    <span class="chk"></span>無&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.01%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.05%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.125%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>其他：
+                  </td>
+                </tr>
+                <tr class="section-separator-top" style="height: 48px;">
+                  <td colspan="5" style="background-color: #c0c0c0 !important; color: #000; text-align: center; font-weight: bold; font-size: 11pt; padding: 4px !important;">
+                    以下 若非 OK ，部分選項不顯示
+                  </td>
+                </tr>
+                <tr style="height: 130px;">
+                  <td style="text-align: center; font-weight: bold; font-size: 12pt; vertical-align: middle;">
+                    ${matchedTpl.statusTitle || '塑形狀況'}
+                  </td>
+                  <td colspan="4" style="padding: 8px 10px;">
+                    ${statusOptionsHTML}
+                  </td>
+                </tr>
+                <tr class="section-separator-top" style="height: 48px;">
+                  <td colspan="5" class="banner-lens-header">
+                    <span class="banner-lens-title">鏡 片 檢 查</span>
+                    <span class="banner-lens-notice">OK鏡片檢查過程可能產生損耗 已向家長說明無不適不檢查</span>
+                  </td>
+                </tr>
+                <tr style="height: 220px;">
+                  <td colspan="5" class="lens-row-wrapper">
+                    <div class="lens-row-container">
+                      <div class="lens-box-od">
+                        <div class="lens-side-info">
+                          <div style="font-size: 16pt; font-weight: bold;">OD</div>
+                          <div style="font-size: 9.5pt; margin: 4px 0;"><span class="chk"></span>無檢查</div>
+                          <div style="margin-top: 12px; font-size: 9.5pt;">鏡片使用</div>
+                          <div style="font-size: 11pt; font-weight: bold; margin-top: 3px;">${odLens.str}</div>
+                          ${odLens.advice ? `<div style="margin-top: 8px;"><span class="badge-custom-alert">${odLens.advice}</span></div>` : ''}
+                        </div>
+                        <div class="lens-side-checks">
+                          <div class="lens-check-block">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <span style="font-weight: bold;">${matchedTpl.odCleanTitle || '清潔狀況 (蛋白)'}</span>
+                              <span class="target-circle"></span>
+                            </div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odCleanOpts || '良好, 輕微, 明顯, 嚴重')}</div>
+                          </div>
+                          <div class="lens-check-block">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <span style="font-weight: bold;">${matchedTpl.odScratchTitle || '刮傷'}</span>
+                              <span class="target-circle"></span>
+                            </div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odScratchOpts || '無, 輕微, 中度, 嚴重')}</div>
+                          </div>
+                          <div class="lens-check-block">
+                            <div style="font-weight: bold;">建議：</div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odAdviceOpts || '繼續保持, 注意清潔, 帶來檢查, 鏡片年限已近')}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="lens-box-os">
+                        <div class="lens-side-info">
+                          <div style="font-size: 16pt; font-weight: bold;">OS</div>
+                          <div style="font-size: 9.5pt; margin: 4px 0;"><span class="chk"></span>無檢查</div>
+                          <div style="margin-top: 12px; font-size: 9.5pt;">鏡片使用</div>
+                          <div style="font-size: 11pt; font-weight: bold; margin-top: 3px;">${osLens.str}</div>
+                          ${osLens.advice ? `<div style="margin-top: 8px;"><span class="badge-custom-alert">${osLens.advice}</span></div>` : ''}
+                        </div>
+                        <div class="lens-side-checks">
+                          <div class="lens-check-block">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <span style="font-weight: bold;">${matchedTpl.osCleanTitle || '清潔狀況 (蛋白)'}</span>
+                              <span class="target-circle"></span>
+                            </div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osCleanOpts || '良好, 輕微, 明顯, 嚴重')}</div>
+                          </div>
+                          <div class="lens-check-block">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                              <span style="font-weight: bold;">${matchedTpl.osScratchTitle || '刮傷'}</span>
+                              <span class="target-circle"></span>
+                            </div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osScratchOpts || '無, 輕微, 中度, 嚴重')}</div>
+                          </div>
+                          <div class="lens-check-block">
+                            <div style="font-weight: bold;">建議：</div>
+                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osAdviceOpts || '繼續保持, 注意清潔, 帶來檢查, 鏡片年限已近')}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <table class="footer-table">
+              <tr class="section-separator-top" style="height: 95px;">
+                <td style="width: 68%; vertical-align: top;">
+                  <div>備註：<span class="fill-bold">${client.longRemark || ''}</span></div>
+                </td>
+                <td style="width: 32%; text-align: right; vertical-align: top;">
+                  <div style="font-size: 11pt; line-height: 1.5;">建議下次回診間隔：</div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding-top: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                      ${client.serviceDate ? `<div style="font-size: 11pt;">售服於 &nbsp;<span class="fill-bold">${client.serviceDate}</span> &nbsp;前。</div>` : ''}
+                      <div style="font-size: 10pt; margin-top: 4px;"><span class="chk"></span>本次未看診，已建議應定期回診。</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 11pt; font-weight: 500;">
+                      ${hintCheckItemsStr}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      `;
+
+      const printWrapper = document.getElementById('printWrapper');
+      printWrapper.innerHTML = fullHTML;
+      window.print();
+    }
+
+    // ==========================================
+    // 分頁一：手動快搜病患（直接產單）
+    // ==========================================
+    function checkOcrClearBtnVisibility() {
+      const inputEl = document.getElementById('ocrManualSearchInput');
+      const clearBtn = document.getElementById('clearOcrSearchBtn');
+      if (inputEl && clearBtn) {
+        clearBtn.style.display = inputEl.value.trim() ? 'block' : 'none';
+      }
+    }
+
+    function clearManualOcrSearch() {
+      const inputEl = document.getElementById('ocrManualSearchInput');
+      if (inputEl) inputEl.value = '';
+      checkOcrClearBtnVisibility();
+      document.getElementById('ocrResultContainer').style.display = 'none';
+      document.getElementById('matchedClientList').innerHTML = '';
+    }
+
+    function filterManualOcrClients() {
+      const inputEl = document.getElementById('ocrManualSearchInput');
+      const q = (inputEl ? inputEl.value : '').trim().toLowerCase();
+      const qCleanDigits = q.replace(/\D/g, '');
+
+      checkOcrClearBtnVisibility();
+
+      if (!q) {
+        return alert("請先輸入欲搜尋的病患編號、姓名、身分證、電話或生日！");
+      }
+
+      const filtered = rawClients.filter(c => {
+        const cCode = String(c.code || '').toLowerCase();
+        const cName = String(c.name || '').toLowerCase();
+        const cId = String(c.idNumber || '').toLowerCase();
+        const cPhone = String(c.phone || '').replace(/\D/g, '');
+        const cBirthday = String(c.birthday || '').trim();
+        const cBirthDigits = cBirthday.replace(/\D/g, '');
+
+        if (cCode.includes(q)) return true;
+        if (cName.includes(q)) return true;
+        if (cId.includes(q)) return true;
+        if (qCleanDigits && cPhone.includes(qCleanDigits)) return true;
+        if (cBirthday.includes(q)) return true;
+        if (qCleanDigits && cBirthDigits.includes(qCleanDigits)) return true;
+
+        return false;
+      });
+
+      const matchedList = filtered.map(c => {
+        let bMonth = 99, bYear = 999;
+        const cBirthday = String(c.birthday || '').trim();
+        if (cBirthday) {
+          const cleanB = cBirthday.replace(/\D/g, '');
+          if (cleanB.length === 7) {
+            bYear = parseInt(cleanB.substring(0, 3), 10);
+            bMonth = parseInt(cleanB.substring(3, 5), 10);
+          } else if (cleanB.length === 6) {
+            bYear = parseInt(cleanB.substring(0, 2), 10);
+            bMonth = parseInt(cleanB.substring(2, 4), 10);
+          }
+        }
+        return { client: c, bMonth, bYear, reasons: "手動快搜命中" };
+      });
+
+      renderMatchedOcrClients(matchedList);
+    }
+
+    // ==========================================
+    // 強化影像前處理：自適應對比增強與文字邊緣銳化
+    // ==========================================
+    function preprocessImageForText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const maxW = 2000;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxW) {
+              h = Math.round((h * maxW) / w);
+              w = maxW;
+            }
+
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const d = imgData.data;
+
+            for (let i = 0; i < d.length; i += 4) {
+              const r = d[i], g = d[i + 1], b = d[i + 2];
+              let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+              if (gray > 155) gray = 255;
+              else if (gray < 125) gray = 0;
+
+              d[i] = gray;
+              d[i + 1] = gray;
+              d[i + 2] = gray;
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.92);
+          };
+          img.onerror = reject;
+        };
+        reader.onerror = reject;
+      });
+    }
+
+    // ==========================================
+    // 多圖高速批次 OCR 辨識
+    // ==========================================
+    async function handleMultipleOcrUpload(event) {
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
+
+      showLoading("啟動光學文字辨識引擎...", `共選取 ${files.length} 張名冊圖片...`);
+
+      try {
+        if (!ocrWorkerInstance) {
+          showLoading("載入高精準繁中+英數字庫中...", "請稍候...");
+          ocrWorkerInstance = await Tesseract.createWorker(['chi_tra', 'eng']);
+        }
+
+        let combinedOcrText = "";
+
+        for (let idx = 0; idx < files.length; idx++) {
+          const file = files[idx];
+          showLoading(`辨識第 ${idx + 1} / ${files.length} 張圖片中...`, file.name);
+
+          const processedBlob = await preprocessImageForText(file);
+          const ret = await ocrWorkerInstance.recognize(processedBlob);
+          combinedOcrText += "\n" + (ret.data.text || "");
+        }
+
+        console.log("=== OCR 辨識純文字 ===\n", combinedOcrText);
+        parseOcrThreeElements(combinedOcrText);
+
+      } catch (err) {
+        console.error("OCR 錯誤:", err);
+        alert("辨識過程發生異常: " + err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==========================================
+    // 三大要素比對引擎 + 生日月份與年份排序
+    // ==========================================
+    function parseOcrThreeElements(ocrText) {
+      if (!ocrText || !ocrText.trim()) {
+        alert("未能辨識出任何文字，請確認照片清晰度。");
+        return;
+      }
+
+      const fullText = ocrText
+        .replace(/[\[\{]/g, '(')
+        .replace(/[\]\}]/g, ')')
+        .replace(/O(?=\d)/g, '0')
+        .replace(/(?<=\d)O/g, '0');
+
+      const matchedList = [];
+
+      rawClients.forEach(client => {
+        const cName = String(client.name || '').trim();
+        const cId = String(client.idNumber || '').trim().toUpperCase();
+        const cBirthday = String(client.birthday || '').trim();
+
+        let b7Code = "";
+        let bMonth = 99;
+        let bYear = 999;
+
+        if (cBirthday) {
+          const cleanB = cBirthday.replace(/\D/g, '');
+          if (cleanB.length === 7) {
+            bYear = parseInt(cleanB.substring(0, 3), 10);
+            bMonth = parseInt(cleanB.substring(3, 5), 10);
+          } else if (cleanB.length === 6) {
+            bYear = parseInt(cleanB.substring(0, 2), 10);
+            bMonth = parseInt(cleanB.substring(2, 4), 10);
+          }
+        }
+
+        let matchCount = 0;
+        let reasons = [];
+
+        const isIdMatched = (cId && cId.length >= 8 && fullText.toUpperCase().includes(cId));
+        if (isIdMatched) {
+          matchCount++;
+          reasons.push("身分證符合");
+        }
+
+        const isNameMatched = (cName && cName.length >= 2 && fullText.includes(cName));
+        if (isNameMatched) {
+          matchCount++;
+          reasons.push("姓名符合");
+        }
+
+        const isBirthMatched = (b7Code && b7Code.length === 7 && fullText.includes(b7Code));
+        if (isBirthMatched) {
+          matchCount++;
+          reasons.push("病歷號生日符合");
+        }
+
+        if (isIdMatched || matchCount >= 2) {
+          if (!matchedList.some(m => m.client.code === client.code)) {
+            matchedList.push({
+              client: client,
+              bMonth: bMonth,
+              bYear: bYear,
+              reasons: reasons.join(' + ')
+            });
+          }
+        }
+      });
+
+      matchedList.sort((a, b) => {
+        if (a.bMonth !== b.bMonth) return a.bMonth - b.bMonth;
+        return a.bYear - b.bYear;
+      });
+
+      renderMatchedOcrClients(matchedList);
+    }
+
+    function renderMatchedOcrClients(list) {
+      const container = document.getElementById('matchedClientList');
+      const countEl = document.getElementById('ocrMatchCount');
+      document.getElementById('ocrResultContainer').style.display = 'block';
+
+      countEl.innerText = list.length;
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:13px;">未在本次比對/搜尋中找到相符客戶。</div>`;
+        return;
+      }
+
+      list.forEach(item => {
+        const c = item.client;
+        const div = document.createElement('div');
+        div.className = 'client-item-card';
+        div.onclick = () => printSingle1to1Checklist(c);
+
+        div.innerHTML = `
+          <div>
+            <div style="font-weight: bold; font-size: 15px; color: #1e293b;">
+              ${c.name} <span style="font-size: 12px; color: #64748b;">(${c.code})</span>
+            </div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">
+              生日：<b>${c.birthday || '-'}</b> ｜ 商品：<span style="color:#0284c7; font-weight:bold;">${c.product || '未分類'}</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; background:#eff6ff; color:#1d4ed8; padding:4px 10px; border-radius:4px; font-weight:bold;">
+              🖨️ 列印單據
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // ==========================================
+    // 分頁二：鏡片照片快搜核心
+    // ==========================================
+    function checkClearBtnVisibility() {
+      const inputEl = document.getElementById('clientSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (inputEl && clearBtn) {
+        clearBtn.style.display = inputEl.value.trim() ? 'block' : 'none';
+      }
+    }
+
+    function filterPhotoClients() {
+      const inputEl = document.getElementById('clientSearchInput');
+      const countEl = document.getElementById('photoSearchResultCount');
+      const container = document.getElementById('photoClientList');
+
+      const q = (inputEl ? inputEl.value : '').trim().toLowerCase();
+      const qCleanDigits = q.replace(/\D/g, '');
+
+      checkClearBtnVisibility();
+
+      if (!q) {
+        if (countEl) countEl.style.display = 'none';
+        if (container) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:40px 15px; color:#94a3b8; font-size:13.5px; line-height:1.6;">
+              🔍 請在上方搜尋框輸入<br>
+              <b>客戶編號、姓名、身分證、電話或生日7碼</b><br>
+              點擊「搜尋」後將展開客戶資料以進行拍照。
+            </div>`;
+        }
+        return;
+      }
+
+      const filtered = rawClients.filter(c => {
+        const cCode = String(c.code || '').toLowerCase();
+        const cName = String(c.name || '').toLowerCase();
+        const cId = String(c.idNumber || '').toLowerCase();
+        const cPhone = String(c.phone || '').replace(/\D/g, '');
+        const cBirthday = String(c.birthday || '').trim();
+        const cBirthDigits = cBirthday.replace(/\D/g, '');
+
+        if (cCode.includes(q)) return true;
+        if (cName.includes(q)) return true;
+        if (cId.includes(q)) return true;
+        if (qCleanDigits && cPhone.includes(qCleanDigits)) return true;
+        if (cBirthday.includes(q)) return true;
+        if (qCleanDigits && cBirthDigits.includes(qCleanDigits)) return true;
+
+        return false;
+      });
+
+      if (countEl) {
+        countEl.style.display = 'block';
+        countEl.innerText = `搜尋符合：共 ${filtered.length} 位客戶`;
+      }
+
+      renderPhotoClientList(filtered);
+    }
+
+    function clearPhotoSearch() {
+      const inputEl = document.getElementById('clientSearchInput');
+      if (inputEl) inputEl.value = '';
+      filterPhotoClients();
+    }
+
+    function renderPhotoClientList(list) {
+      const container = document.getElementById('photoClientList');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:13px;">
+            查無相符客戶資料，請確認搜尋關鍵字。
+          </div>`;
+        return;
+      }
+
+      list.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'app-card';
+        div.style.padding = '12px';
+        div.style.marginBottom = '10px';
+        div.style.borderLeft = '4px solid var(--accent)';
+
+        const hasOdPhoto = Boolean(c.od_lens_photo);
+        const hasOsPhoto = Boolean(c.os_lens_photo);
+
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <div>
+              <div style="font-weight:bold; font-size:16px; color:#1e293b;">
+                ${c.name} <span style="font-size:12.5px; color:#64748b; font-weight:normal;">(${c.code})</span>
+              </div>
+              <div style="font-size:12px; color:#475569; margin-top:2px;">
+                生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
+              </div>
+            </div>
+            <span style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
+              ${c.product || '未分類'}
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+            <div style="text-align:center;">
+              <div style="font-size:12px; font-weight:bold; color:#166534; margin-bottom:4px;">右眼 OD 鏡片</div>
+              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px;">
+                ${hasOdPhoto 
+                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:cover;">` 
+                  : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
+              </div>
+              <button class="btn btn-primary" style="font-size:12px; padding:6px 0; width:100%; background:#16a34a;" onclick="triggerCameraUpload('${c.code}', 'OD')">
+                📷 ${hasOdPhoto ? '重拍 OD' : '拍攝 OD'}
+              </button>
+            </div>
+
+            <div style="text-align:center;">
+              <div style="font-size:12px; font-weight:bold; color:#1e40af; margin-bottom:4px;">左眼 OS 鏡片</div>
+              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px;">
+                ${hasOsPhoto 
+                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:cover;">` 
+                  : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
+              </div>
+              <button class="btn btn-primary" style="font-size:12px; padding:6px 0; width:100%; background:#2563eb;" onclick="triggerCameraUpload('${c.code}', 'OS')">
+                📷 ${hasOsPhoto ? '重拍 OS' : '拍攝 OS'}
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function triggerCameraUpload(code, eye) {
+      currentPhotoTarget = { code, eye };
+      const fileInp = document.getElementById('mobilePhotoInput');
+      fileInp.value = '';
+      fileInp.click();
+    }
+
+    async function handleMobilePhotoSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const client = rawClients.find(c => c.code === currentPhotoTarget.code);
+      if (!client) return alert("查無客戶資料！");
+
+      showLoading("照片壓縮與浮水印壓印中...", "正在安全上傳至雲端資料庫...");
+
+      try {
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+        
+        let rawName = String(client.name || '').trim();
+        let maskedName = rawName;
+        if (rawName.length === 2) {
+          maskedName = rawName[0] + 'O';
+        } else if (rawName.length > 2) {
+          maskedName = rawName[0] + 'O'.repeat(rawName.length - 2) + rawName.slice(-1);
+        }
+
+        const watermarkInfo = {
+          name: maskedName,
+          eye: currentPhotoTarget.eye,
+          date: dateStr
+        };
+
+        const base64 = await compressImageWithWatermark(file, watermarkInfo, 600, 0.65);
+        const fieldKey = currentPhotoTarget.eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
+
+        const updateObj = {};
+        updateObj[fieldKey] = base64;
+
+        const { error } = await supabaseClient
+          .from('customers')
+          .update(updateObj)
+          .eq('code', client.code);
+
+        if (error) throw error;
+
+        client[fieldKey] = base64;
+        filterPhotoClients();
+
+        alert(`🎉 客戶【${client.name} (${client.code})】${currentPhotoTarget.eye} 照片上傳成功！\n已壓印浮水印：${maskedName} ${currentPhotoTarget.eye} ${dateStr}`);
+      } catch (err) {
+        console.error("照片上傳失敗:", err);
+        alert("上傳失敗: " + (err.message || err));
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function compressImageWithWatermark(file, watermarkInfo, maxSide = 600, quality = 0.65) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+
+            if (w > maxSide || h > maxSide) {
+              if (w > h) {
+                h = Math.round((h * maxSide) / w);
+                w = maxSide;
+              } else {
+                w = Math.round((w * maxSide) / h);
+                h = maxSide;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            if (watermarkInfo) {
+              const text = `${watermarkInfo.name}  ${watermarkInfo.eye}  ${watermarkInfo.date}`;
+              const fontSize = Math.max(14, Math.round(w * 0.038));
+              ctx.font = `bold ${fontSize}px -apple-system, "Microsoft JhengHei", sans-serif`;
+              ctx.textBaseline = 'bottom';
+
+              const textMetrics = ctx.measureText(text);
+              const padding = 6;
+              const rectHeight = fontSize + padding * 2;
+              const rectWidth = textMetrics.width + padding * 2 + 10;
+
+              const posX = w - rectWidth - 10;
+              const posY = h - 12;
+
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+              ctx.fillRect(posX, posY - rectHeight + 4, rectWidth, rectHeight);
+
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(text, posX + padding + 5, posY - padding + 2);
+            }
+
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = reject;
+        };
+        reader.onerror = reject;
+      });
+    }
+
+    function showLoading(text, progressText = "") {
+      document.getElementById('loadingText').innerText = text;
+      document.getElementById('ocrProgress').innerText = progressText;
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    document.addEventListener("DOMContentLoaded", initMobileApp);
+  </script>
+</body>
+</html>
