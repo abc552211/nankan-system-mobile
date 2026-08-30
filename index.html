@@ -6,18 +6,134 @@
 
   <title>行動工作站</title>
 
-  <!-- 1. 網頁分頁標籤圖示 (Favicon) -->
+  <!-- 1. 現代瀏覽器通用 Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2338bdf8'/%3E%3Crect x='10' y='18' width='44' height='34' rx='10' fill='%23ffffff' stroke='%230284c7' stroke-width='2.5'/%3E%3Crect x='16' y='13' width='10' height='6' rx='3' fill='%23fbbf24'/%3E%3Ccircle cx='46' cy='25' r='2.5' fill='%2338bdf8'/%3E%3Ccircle cx='23' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Ccircle cx='41' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Cpath d='M31.5 34 L32.5 34' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='34' r='3.2' fill='%230f172a'/%3E%3Ccircle cx='21.8' cy='32.8' r='1.2' fill='%23ffffff'/%3E%3Cpath d='M38 34 Q41 31 44 34' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M29.5 42 Q32 44.5 34.5 42' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round'/%3E%3Cellipse cx='15' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3Cellipse cx='49' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3C/svg%3E">
 
-  <!-- 2. iOS (iPhone / iPad) 加入主畫面桌面圖示 (高清 PNG Base64，非 SVG，保證 100% 顯示) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAMAAABlApw1AAAAY1BMVEUAAAD4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfjGqF+VAAAAInRSTlMA9PP08/Pz9PT18/T08/Pz9PT08/T08/T08/Pz8/P09PTz9PT01jZqKgAAA/pJREFUeAHt3Mly2kAQQNEeA3bMEF5m/P9/3aSpik2wGWR5y2F4n4lQpUa7p+4W9gT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lAEv4D7YpC90UvE1AAAAAAElFTkSuQmCC">
+  <!-- 2. iOS (iPhone / iPad) 與 Android 桌面高解析度 PNG 圖示 -->
+  <link rel="apple-touch-icon" id="dynamicAppleIcon" href="">
+  <link rel="icon" type="image/png" id="dynamicPngIcon" href="">
 
-  <!-- 3. Android Chrome 加入主畫面與全螢幕 App 設定 -->
-  <link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAMAAABlApw1AAAAY1BMVEUAAAD4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfgbnvb4vfjGqF+VAAAAInRSTlMA9PP08/Pz9PT18/T08/Pz9PT08/T08/T08/Pz8/P09PTz9PT01jZqKgAAA/pJREFUeAHt3Mly2kAQQNEeA3bMEF5m/P9/3aSpik2wGWR5y2F4n4lQpUa7p+4W9gT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lwP8S4H8J8L8E+F8C/C8B/pcA/0uA/yXA/xLgfwnwvwT4XwL8LwH+lwD/S4D/JcD/EuB/CfC/BPhfAvwvAf6XAP9LgP8lAEv4D7YpC90UvE1AAAAAAElFTkSuQmCC">
+  <!-- 3. Web App 手機專屬設定 -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="視光工作站">
+  <meta name="theme-color" content="#38bdf8">
+  <!-- 4. 動態生成高清圖示與 Manifest 腳本 (避免手機快取抓不到) -->
+  <script>
+    (function() {
+      // 透過純代碼在手機端動態繪製 512x512 高清眼鏡相機圖示 (保證 100% 成功生成真彩 PNG)
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // 背景 (亮天藍)
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // 相機白機身
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 18;
+      ctx.beginPath();
+      ctx.roundRect(80, 144, 352, 272, 70);
+      ctx.fill();
+      ctx.stroke();
+
+      // 機頂黃色按鈕
+      ctx.fillStyle = '#fbbf24';
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.roundRect(130, 95, 80, 50, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      // 閃光燈
+      ctx.fillStyle = '#38bdf8';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(380, 200, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 雙圓眼鏡 (淺水藍鏡片底色 + 深黑鏡框)
+      ctx.lineWidth = 18;
+      ctx.strokeStyle = '#0f172a';
+      ctx.fillStyle = '#e0f2fe';
+      // 左鏡片
+      ctx.beginPath();
+      ctx.arc(192.5, 282.5, 62.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // 右鏡片
+      ctx.beginPath();
+      ctx.arc(319.5, 282.5, 62.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // 鏡框中樑
+      ctx.beginPath();
+      ctx.moveTo(250, 282.5);
+      ctx.lineTo(262, 282.5);
+      ctx.stroke();
+
+      // 左眼 (水汪汪大眼球 + 兩顆高光)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(192, 282, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(185, 275, 8, 0, Math.PI * 2);
+      ctx.arc(202, 292, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 右眼 (可愛眨眼 ^ 弧線)
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(320, 285, 25, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.stroke();
+
+      // 微笑嘴巴
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(256, 355, 24, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+
+      // 粉嫩腮紅
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.85)';
+      ctx.beginPath();
+      ctx.ellipse(118, 320, 18, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(394, 320, 18, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const pngDataUrl = canvas.toDataURL('image/png');
+
+      // 綁定到 apple-touch-icon 與 icon
+      document.getElementById('dynamicAppleIcon').href = pngDataUrl;
+      document.getElementById('dynamicPngIcon').href = pngDataUrl;
+
+      // 注入 Manifest 讓 Android Chrome 桌面 100% 顯示
+      const manifestObj = {
+        name: "視光行動工作站",
+        short_name: "視光工作站",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#38bdf8",
+        theme_color: "#38bdf8",
+        icons: [{ src: pngDataUrl, sizes: "512x512", type: "image/png" }]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = URL.createObjectURL(manifestBlob);
+      document.head.appendChild(manifestLink);
+    })();
+  </script>
 
 
   <!-- Supabase JS SDK -->
