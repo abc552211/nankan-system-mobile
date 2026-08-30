@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>視光行動工作站 - 精準辨識版</title>
-  
+  <title>南崁兒控行動工作站</title>
+
+  <!-- 可愛眼鏡相機小夥伴 Favicon (圓潤卡通風格、不突兀、免放圖檔) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3C!-- 柔和天藍底圖 --%3E%3Crect width='64' height='64' rx='16' fill='%2338bdf8'/%3E%3C!-- 小相機機身 --%3E%3Crect x='10' y='18' width='44' height='34' rx='10' fill='%23ffffff' stroke='%230284c7' stroke-width='2.5'/%3E%3C!-- 機頂小按鈕與閃光燈 --%3E%3Crect x='16' y='13' width='10' height='6' rx='3' fill='%23fbbf24'/%3E%3Ccircle cx='46' cy='25' r='2.5' fill='%2338bdf8'/%3E%3C!-- 圓圓大眼鏡 (雙鏡框 + 中間鼻樑架) --%3E%3Ccircle cx='23' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Ccircle cx='41' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Cpath d='M31.5 34 L32.5 34' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3C!-- 開心萌萌眼睛 (左眼水汪汪點點、右眼可愛眨眼) --%3E%3Ccircle cx='23' cy='34' r='3.2' fill='%230f172a'/%3E%3Ccircle cx='21.8' cy='32.8' r='1.2' fill='%23ffffff'/%3E%3Cpath d='M38 34 Q41 31 44 34' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3C!-- 靦腆微笑與粉嫩腮紅 --%3E%3Cpath d='M29.5 42 Q32 44.5 34.5 42' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round'/%3E%3Cellipse cx='15' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3Cellipse cx='49' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2338bdf8'/%3E%3Crect x='10' y='18' width='44' height='34' rx='10' fill='%23ffffff' stroke='%230284c7' stroke-width='2.5'/%3E%3Crect x='16' y='13' width='10' height='6' rx='3' fill='%23fbbf24'/%3E%3Ccircle cx='46' cy='25' r='2.5' fill='%2338bdf8'/%3E%3Ccircle cx='23' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Ccircle cx='41' cy='34' r='8.5' fill='%23e0f2fe' stroke='%230f172a' stroke-width='2.5'/%3E%3Cpath d='M31.5 34 L32.5 34' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='34' r='3.2' fill='%230f172a'/%3E%3Ccircle cx='21.8' cy='32.8' r='1.2' fill='%23ffffff'/%3E%3Cpath d='M38 34 Q41 31 44 34' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M29.5 42 Q32 44.5 34.5 42' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round'/%3E%3Cellipse cx='15' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3Cellipse cx='49' cy='38' rx='2.5' ry='1.5' fill='%23f472b6'/%3E%3C/svg%3E">
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Tesseract.js (穩定版) -->
@@ -47,28 +50,67 @@
     .top-nav h1 { font-size: 16px; margin: 0; font-weight: bold; }
     .status-pill { font-size: 11px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 12px; }
 
+    /* ==========================================
+       精美底部導覽列 (純向量 SVG、無 Emoji、專業質感)
+       ========================================== */
     .bottom-bar {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: white;
+      background: #ffffff;
       border-top: 1px solid #e2e8f0;
       display: flex;
-      height: 56px;
+      height: 60px;
       z-index: 50;
+      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.04);
+      padding: 4px 12px;
+      gap: 8px;
     }
+
     .tab-item {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      color: #64748b;
+      gap: 3px;
       cursor: pointer;
       user-select: none;
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #64748b;
+    }
+
+    .tab-item svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.2s ease, stroke 0.2s ease;
+    }
+
+    .tab-item .tab-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    /* 啟用/選中時的膠囊高亮樣式 */
+    .tab-item.active {
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .tab-item.active svg {
+      transform: translateY(-1px);
+    }
+
+    .tab-item:active {
+      transform: scale(0.96);
     }
     .tab-item.active {
       color: var(--accent);
@@ -217,10 +259,13 @@
 
     #printWrapper { display: none; }
 
+    /* =========================================================
+       列印時 1:1 滿版設定 (與電腦版完全一致)
+       ========================================================= */
     @media print {
       @page {
         size: A4 portrait;
-        margin: 5mm 6mm; /* 縮小頁邊距，確保最大可用空間 */
+        margin: 6mm 8mm 6mm 8mm;
       }
       *, *:before, *:after {
         box-sizing: border-box !important;
@@ -231,26 +276,33 @@
         background: white !important;
         padding: 0 !important;
         margin: 0 !important;
+        font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
         color: #000 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      .top-nav, .bottom-bar, .tab-content { display: none !important; }
+      .top-nav, .bottom-bar, .tab-content, #loadingOverlay, #imagePreviewModal { display: none !important; }
       #printWrapper { display: block !important; width: 100% !important; }
 
       .print-page-item {
-        page-break-after: avoid !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        width: 100% !important;
-        max-height: 282mm !important; /* 精準限制在 A4 可列印高度內 */
+        page-break-after: always !important;
+        height: 98vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
         box-sizing: border-box !important;
-        display: block !important;
+      }
+      .print-page-item:last-child {
+        page-break-after: auto !important;
       }
       .print-sheet {
         width: 100% !important;
-        font-size: 9.5pt !important;
-        line-height: 1.2 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        font-size: 11pt !important;
+        line-height: 1.35 !important;
       }
       .header-info-table { 
         width: 100% !important; 
@@ -258,119 +310,121 @@
         margin-bottom: 2px !important; 
       }
       .header-info-table td { 
-        padding: 2px 1px !important; 
-        font-size: 10.5pt !important; 
+        padding: 4px 2px !important; 
+        font-size: 11.5pt !important; 
         border: none !important; 
         vertical-align: bottom !important; 
       }
       .main-form-table {
         width: 100% !important;
         border-collapse: collapse !important;
-        border: 1.5px solid #000 !important;
+        border: 2px solid #000 !important;
         border-bottom: none !important;
         table-layout: fixed !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
       }
       .main-form-table td, .main-form-table th {
-        border: 1px solid #000 !important;
-        padding: 2px 4px !important;
+        border: 1.5px solid #000 !important;
+        padding: 4px 6px !important;
         vertical-align: middle !important;
       }
       .footer-table {
         width: 100% !important;
         border-collapse: collapse !important;
-        border: 1.5px solid #000 !important;
-        border-top: 1px solid #000 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+        border: 2px solid #000 !important;
+        border-top: 1.5px solid #000 !important;
       }
       .footer-table td { 
         border: none !important; 
-        padding: 4px 6px !important; 
-        font-size: 10pt !important; 
+        padding: 8px 10px !important; 
+        font-size: 12pt !important; 
       }
       .section-separator-top td {
-        border-top: 3px double #000 !important;
-        padding-top: 4px !important;
+        border-top: 4px double #000 !important;
+        padding-top: 10px !important;
       }
       .discomfort-grid-8 {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 2px 8px !important;
-        font-size: 9pt !important;
+        gap: 6px 14px !important;
+        font-size: 10pt !important;
       }
       .status-grid-12 {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
-        gap: 3px 6px !important;
-        font-size: 9.5pt !important;
+        gap: 6px 10px !important;
+        font-size: 12pt !important;
       }
       .grid-item-inline { 
         display: flex !important; 
         align-items: center !important; 
-        gap: 2px !important; 
+        gap: 3px !important; 
       }
       .banner-lens-header {
-        background-color: #d1d5db !important;
+        background-color: #c0c0c0 !important;
         color: #000 !important;
-        padding: 2px 6px !important;
-        height: 22px !important;
+        padding: 4px 10px !important;
+        height: 32px !important;
         position: relative !important;
         text-align: center !important;
       }
       .banner-lens-title { 
         font-weight: bold !important; 
-        font-size: 10pt !important; 
-        letter-spacing: 1px !important; 
+        font-size: 11pt !important; 
+        letter-spacing: 2px !important; 
+        display: inline-block !important;
       }
       .banner-lens-notice {
         position: absolute !important;
-        right: 8px !important;
+        right: 10px !important;
         top: 50% !important;
         transform: translateY(-50%) !important;
-        font-size: 7pt !important;
+        font-size: 7.5pt !important;
+        font-weight: normal !important;
         color: #222 !important;
       }
       .lens-row-wrapper { 
         padding: 0 !important; 
         vertical-align: top !important; 
+        border-top: 1.5px solid #000 !important;
       }
       .lens-row-container { 
         display: flex !important; 
         width: 100% !important; 
-        min-height: 155px !important; 
+        height: 100% !important;
+        min-height: 220px !important; 
       }
       .lens-box-od { 
         width: 50% !important; 
-        border-right: 1.5px solid #000 !important; 
-        padding: 4px 6px !important; 
+        border-right: 2px solid #000 !important; 
+        padding: 8px 10px !important; 
         display: flex !important; 
-        gap: 6px !important; 
+        gap: 10px !important; 
       }
       .lens-box-os { 
         width: 50% !important; 
-        padding: 4px 6px !important; 
+        padding: 8px 10px !important; 
         display: flex !important; 
-        gap: 6px !important; 
+        gap: 10px !important; 
       }
       .lens-side-info { 
-        width: 36% !important; 
+        width: 38% !important; 
         text-align: center !important; 
         display: flex !important; 
         flex-direction: column !important; 
+        justify-content: flex-start !important;
         align-items: center !important; 
+        padding-top: 4px !important;
       }
       .lens-side-checks { 
-        width: 64% !important; 
+        width: 62% !important; 
         display: flex !important; 
         flex-direction: column !important; 
         justify-content: space-between !important; 
-        font-size: 8.5pt !important; 
+        font-size: 9.5pt !important; 
       }
       .lens-check-block { 
-        padding-bottom: 2px !important; 
-        margin-bottom: 2px !important; 
+        padding-bottom: 5px !important; 
+        margin-bottom: 5px !important; 
         border-bottom: 1px dashed #cbd5e1 !important; 
       }
       .lens-check-block:last-child { 
@@ -378,12 +432,106 @@
         margin-bottom: 0 !important; 
         padding-bottom: 0 !important; 
       }
-
-      /* 重置所有 inline style 的過大高度，依內容緊湊排版並強制單頁 */
-      .main-form-table tr,
-      .footer-table tr {
-        height: auto !important;
+      svg {
+        display: block !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
+    }
+    /* 鏡片照片動作選單 (Action Sheet) 與操作按鈕 */
+    .photo-action-btn-group {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .photo-btn {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 11.5px;
+      font-weight: bold;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .photo-btn:active { opacity: 0.8; }
+    .photo-btn-od { background: #16a34a; color: #fff; }
+    .photo-btn-os { background: #2563eb; color: #fff; }
+    .photo-btn-delete {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+      flex: 0 0 32px;
+    }
+    .photo-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* 手機底部彈出選單 (Action Sheet) */
+    .action-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 150;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .action-sheet-modal {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      padding: 16px 16px 28px 16px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .action-sheet-title {
+      font-size: 13.5px;
+      font-weight: bold;
+      color: #475569;
+      text-align: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .action-sheet-item {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14.5px;
+      font-weight: bold;
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1e293b;
+    }
+    .action-sheet-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .action-sheet-cancel {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+      border-radius: 8px;
+      background: #e2e8f0;
+      color: #475569;
+      margin-top: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -486,14 +634,43 @@
     </div>
   </div>
 
-  <input type="file" id="mobilePhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMobilePhotoSelected(event)">
+  <!-- 雙上傳通道：相機直拍通道 / 檔案相簿選取通道 -->
+  <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMobilePhotoSelected(event)">
+  <input type="file" id="mobileGalleryInput" accept="image/*" style="display:none;" onchange="handleMobilePhotoSelected(event)">
 
+  <!-- 底部 Action Sheet 選擇器 -->
+  <div id="photoActionSheet" class="action-sheet-overlay" onclick="closePhotoActionSheet(event)">
+    <div class="action-sheet-modal" onclick="event.stopPropagation()">
+      <div id="actionSheetTitle" class="action-sheet-title">選擇上傳方式</div>
+      <button type="button" class="action-sheet-item" onclick="triggerSource('camera')">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        開啟相機直接拍照
+      </button>
+      <button type="button" class="action-sheet-item" onclick="triggerSource('gallery')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        從相簿 / 檔案選取照片
+      </button>
+      <button type="button" class="action-sheet-cancel" onclick="closePhotoActionSheet()">取消</button>
+    </div>
+  </div>
+
+  <!-- 底部功能切換導覽列 -->
   <div class="bottom-bar">
     <div class="tab-item" onclick="switchMobileTab('tab-ocr', this)">
-      <div>精準 OCR / 產單</div>
+      <svg viewBox="0 0 24 24">
+        <!-- 掃描辨識 / 文件產單圖示 -->
+        <path d="M4 7V4h3M17 4h3v3M4 17v3h3M20 17v3h-3M9 9h6M9 12h6M9 15h4" />
+      </svg>
+      <div class="tab-label">OCR 辨識 / 產單</div>
     </div>
+    
     <div class="tab-item active" onclick="switchMobileTab('tab-photo', this)">
-      <div>鏡片拍照上傳</div>
+      <svg viewBox="0 0 24 24">
+        <!-- 鏡片相機拍攝圖示 -->
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+        <circle cx="12" cy="13" r="4" />
+      </svg>
+      <div class="tab-label">鏡片拍照上傳</div>
     </div>
   </div>
 
@@ -502,10 +679,18 @@
     <div id="loadingText">處理中...</div>
     <div id="ocrProgress" style="font-size: 12px; margin-top: 6px; opacity: 0.85;"></div>
   </div>
-  <!-- 大圖預覽彈窗 (點擊小圖放大) -->
-  <div id="imagePreviewModal" onclick="closeImagePreview()" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box;">
-    <span onclick="closeImagePreview()" style="position: absolute; top: 16px; right: 20px; color: white; font-size: 32px; font-weight: bold; cursor: pointer; user-select: none;">✕</span>
-    <img id="previewModalImg" src="" style="max-width: 95%; max-height: 85vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: contain;">
+  <!-- 大圖預覽彈窗 (含刪除照片按鈕) -->
+  <div id="imagePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; flex-direction: column;">
+    <span onclick="closeImagePreview()" style="position: absolute; top: 16px; right: 20px; color: white; font-size: 30px; font-weight: bold; cursor: pointer; user-select: none;">✕</span>
+    <img id="previewModalImg" src="" style="max-width: 95%; max-height: 75vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: contain;">
+    <div style="margin-top: 14px; display: flex; gap: 10px;">
+      <button type="button" class="btn" style="background:#dc2626; color:white; font-size:13px; padding:8px 16px;" onclick="deleteCurrentModalPhoto()">
+        刪除此照片
+      </button>
+      <button type="button" class="btn btn-secondary" style="font-size:13px; padding:8px 16px;" onclick="closeImagePreview()">
+        關閉
+      </button>
+    </div>
   </div>
 
   <div id="printWrapper"></div>
@@ -597,7 +782,7 @@
     }
 
     // ==========================================
-    // 總表 1:1 實體回診單產生引擎 (嵌入純 SVG 向量條碼)
+    // 總表 1:1 實體回診單產生引擎 (完全對齊電腦版輸出)
     // ==========================================
     function printSingle1to1Checklist(client) {
       const daysMap = ["日", "一", "二", "三", "四", "五", "六"];
@@ -684,7 +869,15 @@
       let discomfortHTML = `<div class="discomfort-grid-8">`;
       for (let i = 0; i < 8; i++) {
         const opt = rawDisc[i];
-        discomfortHTML += opt ? `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>` : `<div></div>`;
+        if (opt) {
+          if (opt.startsWith('_')) {
+            discomfortHTML += `<div class="grid-item-inline">${opt.substring(1)}</div>`;
+          } else {
+            discomfortHTML += `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>`;
+          }
+        } else {
+          discomfortHTML += `<div></div>`;
+        }
       }
       discomfortHTML += `</div>`;
 
@@ -692,7 +885,15 @@
       let statusOptionsHTML = `<div class="status-grid-12">`;
       for (let i = 0; i < 12; i++) {
         const opt = rawOpts[i];
-        statusOptionsHTML += opt ? `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>` : `<div></div>`;
+        if (opt) {
+          if (opt.startsWith('_')) {
+            statusOptionsHTML += `<div class="grid-item-inline">${opt.substring(1)}</div>`;
+          } else {
+            statusOptionsHTML += `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>`;
+          }
+        } else {
+          statusOptionsHTML += `<div></div>`;
+        }
       }
       statusOptionsHTML += `</div>`;
 
@@ -707,16 +908,40 @@
       const codeBarcodeSvg = getBarcodeSVGHtml(cleanCode);
       const idBarcodeSvg = getBarcodeSVGHtml(cleanId);
 
+      let serviceDateText = "";
+      if (client.serviceDate && client.serviceDate.includes('/')) {
+        const sp = client.serviceDate.split('/');
+        const sDate = new Date(parseInt(sp[0], 10), parseInt(sp[1], 10) - 1, parseInt(sp[2], 10));
+        if (!isNaN(sDate.getTime())) {
+          const diffDays = Math.max(0, Math.floor((now.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)));
+          const yCnt = Math.floor(diffDays / 365);
+          const mCnt = Math.floor((diffDays % 365) / 30);
+          const dCnt = diffDays % 30;
+
+          let diffStr = "";
+          if (yCnt > 0) {
+            diffStr = `${yCnt}年${mCnt}月${dCnt}天前`;
+          } else if (mCnt > 0) {
+            diffStr = `${mCnt}月${dCnt}天前`;
+          } else {
+            diffStr = `${dCnt}天前`;
+          }
+
+          serviceDateText = `<div>售服於 &nbsp;<span class="fill-bold">${client.serviceDate}</span> &nbsp;， ${diffStr}。</div>`;
+        }
+      }
+
       const fullHTML = `
         <div class="print-page-item">
           <div class="print-sheet">
             <div>
               <table class="header-info-table">
                 <tr>
-                  <td style="width: 25%;">姓名：<span class="fill-bold" style="font-size: 13pt;">${client.name}</span></td>
-                  <td style="width: 25%;">生日：<span class="fill-bold">${client.birthday || ''}</span></td>
-                  <td style="width: 32%;">檢查日：<span class="fill-bold">${checkDateFull}</span></td>
-                  <td style="width: 18%; text-align: right;">DR. <span class="fill-bold">王醫師</span></td>
+                  <td style="width: 22%;">姓名：<span class="fill-bold" style="font-size: 13pt;">${client.name}</span></td>
+                  <td style="width: 22%;">生日：<span class="fill-bold">${client.birthday || ''}</span></td>
+                  <td style="width: 28%;">檢查日：<span class="fill-bold">${checkDateFull}</span></td>
+                  <td style="width: 14%;">DR. <span class="fill-bold">王醫師</span></td>
+                  <td style="width: 14%;">掛號：<span class="fill-bold"></span></td>
                 </tr>
               </table>
 
@@ -730,7 +955,7 @@
                 </colgroup>
                 <tr style="height: 52px;">
                   <td style="background: #ffffff !important; vertical-align: middle; padding: 4px 8px; border-right: none; text-align: center;">
-                    <div style="display:flex; justify-content:center; align-items:center; height:34px; max-width:90%; margin:0 auto; overflow:hidden;">
+                    <div style="display:flex; justify-content:center; align-items:center; height:36px; max-width:90%; margin:0 auto; overflow:hidden;">
                       ${codeBarcodeSvg}
                     </div>
                     <div style="font-size: 10pt; font-weight: bold; margin-top: 1px;">${cleanCode}</div>
@@ -776,7 +1001,7 @@
                 </tr>
                 <tr class="section-separator-top" style="height: 48px;">
                   <td style="background: #ffffff !important; text-align: center; vertical-align: middle; padding: 6px 8px;" rowspan="2">
-                    <div style="display:flex; justify-content:center; align-items:center; height:34px; max-width:90%; margin:0 auto; overflow:hidden;">
+                    <div style="display:flex; justify-content:center; align-items:center; height:34px;">
                       ${idBarcodeSvg}
                     </div>
                     <div style="font-weight: bold; font-size: 9.5pt; margin-top: 1px;">${cleanId}</div>
@@ -790,14 +1015,14 @@
                 <tr style="height: 85px;">
                   <td colspan="1" style="padding: 6px 12px; font-size: 11.5pt; vertical-align: middle; width: 40%;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                      <span style="font-weight: bold; width: 35px;">OD:</span>
-                      <span class="fill-bold" style="font-size: 12.5pt;">${client.alOD || '____'}</span>
-                      <span style="font-size: 10pt;">mm</span>
+                      <span style="font-weight: bold; width: 25px;">OD:</span>
+                      <span class="fill-bold" style="font-size: 10pt;">${client.alOD || '____'}</span>
+                      <span style="font-size: 5pt;">mm</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                      <span style="font-weight: bold; width: 35px;">OS:</span>
-                      <span class="fill-bold" style="font-size: 12.5pt;">${client.alOS || '____'}</span>
-                      <span style="font-size: 10pt;">mm</span>
+                      <span style="font-weight: bold; width: 25px;">OS:</span>
+                      <span class="fill-bold" style="font-size: 10pt;">${client.alOS || '____'}</span>
+                      <span style="font-size: 5pt;">mm</span>
                     </div>
                   </td>
                   <td colspan="3" style="padding: 6px 12px; vertical-align: middle; width: 60%;">
@@ -808,11 +1033,13 @@
                           <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OD:</td>
                           <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
                           <td style="width: 35px; border:none;">mm</td>
+                          <td style="border:none;"></td>
                         </tr>
                         <tr>
                           <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OS:</td>
                           <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
                           <td style="width: 35px; border:none;">mm</td>
+                          <td style="border:none;"></td>
                         </tr>
                       </table>
                     </div>
@@ -912,7 +1139,7 @@
             </div>
 
             <table class="footer-table">
-              <tr class="section-separator-top" style="height: 95px;">
+              <tr class="section-separator-top" style="height: 115px;">
                 <td style="width: 68%; vertical-align: top;">
                   <div>備註：<span class="fill-bold">${client.longRemark || ''}</span></div>
                 </td>
@@ -924,7 +1151,7 @@
                 <td colspan="2" style="padding-top: 6px;">
                   <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
-                      ${client.serviceDate ? `<div style="font-size: 11pt;">售服於 &nbsp;<span class="fill-bold">${client.serviceDate}</span> &nbsp;前。</div>` : ''}
+                      ${serviceDateText}
                       <div style="font-size: 10pt; margin-top: 4px;"><span class="chk"></span>本次未看診，已建議應定期回診。</div>
                     </div>
                     <div style="color: #64748b; font-size: 11pt; font-weight: 500;">
@@ -1316,28 +1543,46 @@
           </div>
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+            <!-- OD 側 -->
             <div style="text-align:center;">
               <div style="font-size:12px; font-weight:bold; color:#166534; margin-bottom:4px;">右眼 OD 鏡片</div>
-              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; cursor:${hasOdPhoto ? 'pointer' : 'default'};" ${hasOdPhoto ? `onclick="openImagePreview('${c.od_lens_photo}')"` : ''}>
+              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'};" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
                 ${hasOdPhoto 
-                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大">` 
+                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大/刪除">` 
                   : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
               </div>
-              <button class="btn btn-primary" style="font-size:12px; padding:6px 0; width:100%; background:#16a34a;" onclick="triggerCameraUpload('${c.code}', 'OD')">
-                📷 ${hasOdPhoto ? '重拍 OD' : '拍攝 OD'}
-              </button>
+              <div class="photo-action-btn-group">
+                <button type="button" class="photo-btn photo-btn-od" onclick="openPhotoActionSheet('${c.code}', 'OD', '${c.name}')">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  ${hasOdPhoto ? '重選 OD' : '上傳 OD'}
+                </button>
+                ${hasOdPhoto ? `
+                  <button type="button" class="photo-btn photo-btn-delete" title="刪除 OD 照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                ` : ''}
+              </div>
             </div>
 
+            <!-- OS 側 -->
             <div style="text-align:center;">
               <div style="font-size:12px; font-weight:bold; color:#1e40af; margin-bottom:4px;">左眼 OS 鏡片</div>
-              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:6px; cursor:${hasOsPhoto ? 'pointer' : 'default'};" ${hasOsPhoto ? `onclick="openImagePreview('${c.os_lens_photo}')"` : ''}>
+              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'};" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
                 ${hasOsPhoto 
-                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大">` 
+                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大/刪除">` 
                   : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
               </div>
-              <button class="btn btn-primary" style="font-size:12px; padding:6px 0; width:100%; background:#2563eb;" onclick="triggerCameraUpload('${c.code}', 'OS')">
-                📷 ${hasOsPhoto ? '重拍 OS' : '拍攝 OS'}
-              </button>
+              <div class="photo-action-btn-group">
+                <button type="button" class="photo-btn photo-btn-os" onclick="openPhotoActionSheet('${c.code}', 'OS', '${c.name}')">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  ${hasOsPhoto ? '重選 OS' : '上傳 OS'}
+                </button>
+                ${hasOsPhoto ? `
+                  <button type="button" class="photo-btn photo-btn-delete" title="刪除 OS 照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                ` : ''}
+              </div>
             </div>
           </div>
         `;
@@ -1345,11 +1590,93 @@
       });
     }
 
-    function triggerCameraUpload(code, eye) {
+    // ==========================================
+    // 照片上傳來源選單 (相機 / 相簿檔案)
+    // ==========================================
+    function openPhotoActionSheet(code, eye, name) {
       currentPhotoTarget = { code, eye };
-      const fileInp = document.getElementById('mobilePhotoInput');
-      fileInp.value = '';
-      fileInp.click();
+      const sheet = document.getElementById('photoActionSheet');
+      const title = document.getElementById('actionSheetTitle');
+      if (title) title.innerText = `上傳 ${name}【${eye}】鏡片照片`;
+      if (sheet) sheet.style.display = 'flex';
+    }
+
+    function closePhotoActionSheet(e) {
+      if (e && e.target !== e.currentTarget) return;
+      const sheet = document.getElementById('photoActionSheet');
+      if (sheet) sheet.style.display = 'none';
+    }
+
+    function triggerSource(sourceType) {
+      closePhotoActionSheet();
+      const inputEl = sourceType === 'camera' 
+        ? document.getElementById('mobileCameraInput') 
+        : document.getElementById('mobileGalleryInput');
+      if (inputEl) {
+        inputEl.value = '';
+        inputEl.click();
+      }
+    }
+
+    // ==========================================
+    // 鏡片照片刪除邏輯 (同步雲端資料庫)
+    // ==========================================
+    async function deleteLensPhoto(code, eye) {
+      const client = rawClients.find(c => c.code === code);
+      if (!client) return;
+
+      if (!confirm(`確定要刪除【${client.name} (${code})】的 ${eye} 鏡片照片嗎？`)) return;
+
+      showLoading("正在刪除照片並同步雲端...");
+
+      try {
+        const fieldKey = eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
+        const updateObj = {};
+        updateObj[fieldKey] = '';
+
+        const { error } = await supabaseClient
+          .from('customers')
+          .update(updateObj)
+          .eq('code', client.code);
+
+        if (error) throw error;
+
+        client[fieldKey] = '';
+        filterPhotoClients();
+        alert(`已成功刪除【${client.name}】${eye} 鏡片照片！`);
+      } catch (err) {
+        console.error("照片刪除失敗:", err);
+        alert("刪除失敗: " + (err.message || err));
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==========================================
+    // 鏡片大圖預覽 (Lightbox) 與直接刪除
+    // ==========================================
+    function openImagePreview(code, eye, imgSrc) {
+      if (!imgSrc) return;
+      currentPhotoTarget = { code, eye };
+      const modal = document.getElementById('imagePreviewModal');
+      const modalImg = document.getElementById('previewModalImg');
+      if (modal && modalImg) {
+        modalImg.src = imgSrc;
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeImagePreview() {
+      const modal = document.getElementById('imagePreviewModal');
+      const modalImg = document.getElementById('previewModalImg');
+      if (modal) modal.style.display = 'none';
+      if (modalImg) modalImg.src = '';
+    }
+
+    async function deleteCurrentModalPhoto() {
+      if (!currentPhotoTarget.code || !currentPhotoTarget.eye) return;
+      closeImagePreview();
+      await deleteLensPhoto(currentPhotoTarget.code, currentPhotoTarget.eye);
     }
 
     async function handleMobilePhotoSelected(event) {
@@ -1468,27 +1795,6 @@
 
     function hideLoading() {
       document.getElementById('loadingOverlay').style.display = 'none';
-    }
-    // ==========================================
-    // 鏡片大圖預覽 (Lightbox)
-    // ==========================================
-    function openImagePreview(imgSrc) {
-      if (!imgSrc) return;
-      const modal = document.getElementById('imagePreviewModal');
-      const modalImg = document.getElementById('previewModalImg');
-      if (modal && modalImg) {
-        modalImg.src = imgSrc;
-        modal.style.display = 'flex';
-      }
-    }
-
-    function closeImagePreview() {
-      const modal = document.getElementById('imagePreviewModal');
-      const modalImg = document.getElementById('previewModalImg');
-      if (modal) {
-        modal.style.display = 'none';
-        if (modalImg) modalImg.src = '';
-      }
     }
 
     document.addEventListener("DOMContentLoaded", initMobileApp);
