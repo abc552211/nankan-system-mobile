@@ -608,44 +608,64 @@
       align-items: flex-end;
       justify-content: center;
     }
+    /* ==========================================
+       極簡 2 選項 Action Sheet (相機 / 相簿)
+       ========================================== */
+    .action-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 150;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
     .action-sheet-modal {
       background: #ffffff;
       width: 100%;
       max-width: 480px;
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
       padding: 16px 16px 28px 16px;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-      animation: slideUp 0.2s ease-out;
+      box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.18s ease-out;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
     @keyframes slideUp {
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
-    .action-sheet-title {
-      font-size: 13.5px;
-      font-weight: bold;
-      color: #475569;
-      text-align: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #f1f5f9;
-    }
     .action-sheet-item {
       width: 100%;
-      padding: 12px 16px;
-      font-size: 14.5px;
+      padding: 15px 16px;
+      font-size: 15.5px;
       font-weight: bold;
-      text-align: left;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      text-align: center;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
       background: #f8fafc;
-      margin-bottom: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       color: #1e293b;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .action-sheet-item:active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      transform: scale(0.98);
+    }
+    .action-sheet-item svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
     }
     .action-sheet-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
     .action-sheet-cancel {
@@ -1648,44 +1668,45 @@
       list.forEach(c => {
         const div = document.createElement('div');
         div.className = 'app-card';
-        div.style.padding = '12px';
-        div.style.marginBottom = '10px';
+        div.style.padding = '14px';
+        div.style.marginBottom = '12px';
         div.style.borderLeft = '4px solid var(--accent)';
 
         const hasOdPhoto = Boolean(c.od_lens_photo);
         const hasOsPhoto = Boolean(c.os_lens_photo);
 
         div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
             <div>
-              <div style="font-weight:bold; font-size:16px; color:#1e293b;">
-                ${c.name} <span style="font-size:12.5px; color:#64748b; font-weight:normal;">(${c.code})</span>
+              <div style="font-weight:bold; font-size:16.5px; color:#1e293b;">
+                ${c.name} <span style="font-size:13px; color:#64748b; font-weight:normal;">(${c.code})</span>
               </div>
-              <div style="font-size:12px; color:#475569; margin-top:2px;">
+              <div style="font-size:12.5px; color:#475569; margin-top:3px;">
                 生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
               </div>
             </div>
-            <span style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
+            <span style="font-size:11.5px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
               ${c.product || '未分類'}
             </span>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
             <!-- OD 側 -->
-            <div style="text-align:center;">
-              <div style="font-size:12px; font-weight:bold; color:#166534; margin-bottom:4px;">右眼 OD 鏡片</div>
-              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'};" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:13px; font-weight:bold; color:#166534; margin-bottom:6px;">右眼 OD 鏡片</div>
+              <!-- 加大加高至 135px，改為 contain 完整呈現鏡片全貌 -->
+              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
                 ${hasOdPhoto 
-                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大/刪除">` 
-                  : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
+                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
               </div>
-              <div class="photo-action-btn-group">
-                <button type="button" class="photo-btn photo-btn-od" onclick="openPhotoActionSheet('${c.code}', 'OD', '${c.name}')">
+              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
+                <button type="button" class="photo-btn photo-btn-od" style="padding:8px 6px; font-size:12px;" onclick="openPhotoActionSheet('${c.code}', 'OD', '${c.name}')">
                   <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   ${hasOdPhoto ? '重選 OD' : '上傳 OD'}
                 </button>
                 ${hasOdPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" title="刪除 OD 照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除 OD 照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 ` : ''}
@@ -1693,20 +1714,21 @@
             </div>
 
             <!-- OS 側 -->
-            <div style="text-align:center;">
-              <div style="font-size:12px; font-weight:bold; color:#1e40af; margin-bottom:4px;">左眼 OS 鏡片</div>
-              <div style="width:100%; height:75px; background:#fff; border:1px dashed #cbd5e1; border-radius:4px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'};" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:13px; font-weight:bold; color:#1e40af; margin-bottom:6px;">左眼 OS 鏡片</div>
+              <!-- 加大加高至 135px，改為 contain 完整呈現鏡片全貌 -->
+              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
                 ${hasOsPhoto 
-                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:cover;" title="點擊放大/刪除">` 
-                  : `<span style="font-size:11px; color:#94a3b8;">未拍攝</span>`}
+                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
               </div>
-              <div class="photo-action-btn-group">
-                <button type="button" class="photo-btn photo-btn-os" onclick="openPhotoActionSheet('${c.code}', 'OS', '${c.name}')">
+              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
+                <button type="button" class="photo-btn photo-btn-os" style="padding:8px 6px; font-size:12px;" onclick="openPhotoActionSheet('${c.code}', 'OS', '${c.name}')">
                   <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   ${hasOsPhoto ? '重選 OS' : '上傳 OS'}
                 </button>
                 ${hasOsPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" title="刪除 OS 照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除 OS 照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 ` : ''}
