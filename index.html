@@ -913,15 +913,14 @@
       return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    // 自動計算背景反差文字顏色 (深底白字、淺底黑字)
+    // 自動計算反差文字顏色 (深底反白、淺底反深黑)
     function getContrastTextColor(hex) {
       if (!hex || !hex.startsWith('#') || hex.length < 7) return '#ffffff';
       const r = parseInt(hex.slice(1, 3), 16);
       const g = parseInt(hex.slice(3, 5), 16);
       const b = parseInt(hex.slice(5, 7), 16);
-      // YIQ 亮度公式 (大於 160 代表是明亮淺色)
       const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-      return (yiq >= 160) ? '#0f172a' : '#ffffff';
+      return (yiq >= 165) ? '#0f172a' : '#ffffff';
     }
 
     function renderPhotoClientList(list) {
@@ -939,17 +938,26 @@
       list.forEach(c => {
         const rawProd = (c.product || '').trim();
         const conf = productConfigMap[rawProd] || {};
+
+        // 正確抓取顏色設定：1.徽章 2.OD 3.OS
         const badgeColor = conf.badgeColor || '#5c8a6b';
-        const odColor = conf.odColor || '#5c8a6b';
-        const osColor = conf.osColor || '#3b82f6';
+        const odColor = conf.odColor || '#16a34a';
+        const osColor = conf.osColor || '#2563eb';
         const displayProductName = conf.displayName || rawProd || '未分類';
 
         const div = document.createElement('div');
         div.className = 'app-card';
-        div.style.padding = '14px';
-        div.style.marginBottom = '14px';
-        div.style.borderRadius = '8px';
-        div.style.border = '1px solid #e2e8f0';
+        div.style.cssText = `
+          padding: 12px 10px;
+          margin-bottom: 12px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          box-sizing: border-box;
+          width: 100%;
+          max-width: 100%;
+          overflow: hidden;
+          background: #ffffff;
+        `;
 
         const hasOdPhoto = Boolean(c.od_lens_photo);
         const hasOsPhoto = Boolean(c.os_lens_photo);
@@ -959,96 +967,106 @@
         const odTimeStr = c.odDuration || c.odChangeDate || '-';
         const osTimeStr = c.osDuration || c.osChangeDate || '-';
 
-        // 自適應方塊樣式 (同 LIFF 客戶端質感)
-        const odBoxStyle = `background: ${hexToRgba(odColor, 0.06)}; border-left: 3.5px solid ${odColor}; border: 1px solid ${hexToRgba(odColor, 0.25)}; border-left-width: 3.5px; border-left-color: ${odColor};`;
-        const osBoxStyle = `background: ${hexToRgba(osColor, 0.06)}; border-left: 3.5px solid ${osColor}; border: 1px solid ${hexToRgba(osColor, 0.25)}; border-left-width: 3.5px; border-left-color: ${osColor};`;
+        // LIFF 同款樣式
+        const odBoxStyle = `background: ${hexToRgba(odColor, 0.06)}; border: 1px solid ${hexToRgba(odColor, 0.25)}; border-left: 3.5px solid ${odColor};`;
+        const osBoxStyle = `background: ${hexToRgba(osColor, 0.06)}; border: 1px solid ${hexToRgba(osColor, 0.25)}; border-left: 3.5px solid ${osColor};`;
         const badgeStyle = `background: ${hexToRgba(badgeColor, 0.12)}; color: ${badgeColor}; border: 1px solid ${hexToRgba(badgeColor, 0.35)};`;
 
-        // 動態反差按鈕文字顏色 (淺底自動反黑，深底自動反白)
+        // 動態計算按鈕文字反差色
         const odTextColor = getContrastTextColor(odColor);
         const osTextColor = getContrastTextColor(osColor);
         const odBorder = (odTextColor === '#0f172a') ? `border: 1px solid ${hexToRgba(odColor, 0.6)};` : `border: 1px solid ${odColor};`;
         const osBorder = (osTextColor === '#0f172a') ? `border: 1px solid ${hexToRgba(osColor, 0.6)};` : `border: 1px solid ${osColor};`;
 
-        const odBtnStyle = `background: ${odColor}; color: ${odTextColor}; ${odBorder} box-shadow: 0 1px 3px rgba(0,0,0,0.12); font-weight: bold;`;
-        const osBtnStyle = `background: ${osColor}; color: ${osTextColor}; ${osBorder} box-shadow: 0 1px 3px rgba(0,0,0,0.12); font-weight: bold;`;
+        const odBtnStyle = `background: ${odColor}; color: ${odTextColor}; ${odBorder};`;
+        const osBtnStyle = `background: ${osColor}; color: ${osTextColor}; ${osBorder};`;
 
         div.innerHTML = `
           <!-- 卡片頂部：姓名與商品徽章 -->
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; margin-bottom: 10px;">
-            <div>
-              <div style="font-weight:bold; font-size:17px; color:#2d3748;">
-                ${c.name} <span style="font-size:13px; color:#64748b; font-weight:normal;">(${c.code})</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #edf2f7; padding-bottom: 6px; margin-bottom: 8px; gap: 6px;">
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-weight:bold; font-size:16px; color:#2d3748; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                ${c.name} <span style="font-size:12px; color:#64748b; font-weight:normal;">(${c.code})</span>
               </div>
-              <div style="font-size:12px; color:#64748b; margin-top:2px;">
+              <div style="font-size:11.5px; color:#64748b; margin-top:1px;">
                 生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
               </div>
             </div>
-            <span style="font-size:12px; padding:3px 10px; border-radius:4px; font-weight:bold; ${badgeStyle}">
+            <span style="font-size:11.5px; padding:2px 8px; border-radius:4px; font-weight:bold; white-space:nowrap; flex-shrink: 0; ${badgeStyle}">
               ${displayProductName}
             </span>
           </div>
 
-          <!-- LIFF 客戶端同款：回診與時間資訊區塊 -->
-          <div style="margin-bottom: 12px;">
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3.5px solid #94a3b8; border-radius:5px; padding:6px 10px; font-size:12px; margin-bottom:6px;">
-              <div style="font-size:11px; color:#64748b; margin-bottom:1px;">最近回診檢查日</div>
-              <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${lastVisitStr}</div>
+          <!-- 回診與時間資訊區塊 (自適應左右並列) -->
+          <div style="margin-bottom: 8px; width: 100%;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3.5px solid #94a3b8; border-radius:4px; padding:4px 8px; font-size:11.5px; margin-bottom:5px; box-sizing:border-box;">
+              <div style="font-size:10.5px; color:#64748b;">最近回診檢查日</div>
+              <div style="font-size:12.5px; font-weight:600; color:#1e293b;">${lastVisitStr}</div>
             </div>
 
-            <div style="display:flex; gap:8px;">
-              <div style="flex:1; border-radius:5px; padding:6px 10px; font-size:12px; box-sizing:border-box; ${odBoxStyle}">
-                <div style="font-size:11px; color:#64748b; margin-bottom:1px;">${labels.odTitle}時間</div>
-                <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${odTimeStr}</div>
+            <div style="display:flex; gap:6px; width: 100%;">
+              <div style="flex:1; min-width:0; border-radius:4px; padding:4px 8px; font-size:11.5px; box-sizing:border-box; ${odBoxStyle}">
+                <div style="font-size:10.5px; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${labels.odTitle}時間</div>
+                <div style="font-size:12.5px; font-weight:600; color:#1e293b;">${odTimeStr}</div>
               </div>
-              <div style="flex:1; border-radius:5px; padding:6px 10px; font-size:12px; box-sizing:border-box; ${osBoxStyle}">
-                <div style="font-size:11px; color:#64748b; margin-bottom:1px;">${labels.osTitle}時間</div>
-                <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${osTimeStr}</div>
+              <div style="flex:1; min-width:0; border-radius:4px; padding:4px 8px; font-size:11.5px; box-sizing:border-box; ${osBoxStyle}">
+                <div style="font-size:10.5px; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${labels.osTitle}時間</div>
+                <div style="font-size:12.5px; font-weight:600; color:#1e293b;">${osTimeStr}</div>
               </div>
             </div>
           </div>
 
-          <!-- 照片展示區 (自適應按鈕與比例) -->
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-            <!-- 照片 1 (OD) -->
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:12.5px; font-weight:bold; color:${odColor}; margin-bottom:6px;">${labels.odTitle}</div>
-              <div style="width:100%; aspect-ratio:4/3; min-height:175px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.25);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
+          <!-- 左右精緻並列照片區 (自適應等寬、絕不破版、點擊可放大) -->
+          <div style="display:flex; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0; width:100%; box-sizing:border-box;">
+            
+            <!-- OD 側 (左 50%) -->
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:11.5px; font-weight:bold; color:${odColor}; margin-bottom:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+                ${labels.odTitle}
+              </div>
+              
+              <div style="width:100%; aspect-ratio: 1 / 1; max-height: 140px; background:#0f172a; border:1px dashed #94a3b8; border-radius:5px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
                 ${hasOdPhoto 
                   ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;">未拍攝</div>`}
+                  : `<div style="text-align:center; color:#94a3b8; font-size:11px;">未拍攝</div>`}
               </div>
-              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn" style="${odBtnStyle} padding:8px 6px; font-size:12px; border-radius:5px;" onclick="triggerDirectUpload('${c.code}', 'OD')">
-                  ${hasOdPhoto ? `重選 ${labels.odShort}` : `上傳 ${labels.odShort}`}
+
+              <div style="display:flex; gap:3px; width:100%; margin-top:6px;">
+                <button type="button" class="photo-btn" style="${odBtnStyle} flex:1; padding:6px 2px; font-size:11.5px; border-radius:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" onclick="triggerDirectUpload('${c.code}', 'OD')">
+                  ${hasOdPhoto ? `重選` : `上傳`}
                 </button>
                 ${hasOdPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px; border-radius:5px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:6px 6px; border-radius:4px; font-size:11px; flex: 0 0 24px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
                     ✕
                   </button>
                 ` : ''}
               </div>
             </div>
 
-            <!-- 照片 2 (OS) -->
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:12.5px; font-weight:bold; color:${osColor}; margin-bottom:6px;">${labels.osTitle}</div>
-              <div style="width:100%; aspect-ratio:4/3; min-height:175px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.25);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
+            <!-- OS 側 (右 50%) -->
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:11.5px; font-weight:bold; color:${osColor}; margin-bottom:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+                ${labels.osTitle}
+              </div>
+              
+              <div style="width:100%; aspect-ratio: 1 / 1; max-height: 140px; background:#0f172a; border:1px dashed #94a3b8; border-radius:5px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
                 ${hasOsPhoto 
                   ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;">未拍攝</div>`}
+                  : `<div style="text-align:center; color:#94a3b8; font-size:11px;">未拍攝</div>`}
               </div>
-              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn" style="${osBtnStyle} padding:8px 6px; font-size:12px; border-radius:5px;" onclick="triggerDirectUpload('${c.code}', 'OS')">
-                  ${hasOsPhoto ? `重選 ${labels.osShort}` : `上傳 ${labels.osShort}`}
+
+              <div style="display:flex; gap:3px; width:100%; margin-top:6px;">
+                <button type="button" class="photo-btn" style="${osBtnStyle} flex:1; padding:6px 2px; font-size:11.5px; border-radius:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" onclick="triggerDirectUpload('${c.code}', 'OS')">
+                  ${hasOsPhoto ? `重選` : `上傳`}
                 </button>
                 ${hasOsPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px; border-radius:5px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:6px 6px; border-radius:4px; font-size:11px; flex: 0 0 24px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
                     ✕
                   </button>
                 ` : ''}
               </div>
             </div>
+
           </div>
         `;
         container.appendChild(div);
