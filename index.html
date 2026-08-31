@@ -393,7 +393,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 6mm 8mm 6mm 8mm;
+        margin: 5mm 7mm 5mm 7mm;
       }
       *, *:before, *:after {
         box-sizing: border-box !important;
@@ -404,7 +404,7 @@
         background: white !important;
         padding: 0 !important;
         margin: 0 !important;
-        font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+        font-family: -apple-system, "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
         color: #000 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -414,23 +414,24 @@
 
       .print-page-item {
         page-break-after: always !important;
-        height: 98vh !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         box-sizing: border-box !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
       }
       .print-page-item:last-child {
         page-break-after: auto !important;
       }
       .print-sheet {
         width: 100% !important;
-        height: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        font-size: 11pt !important;
-        line-height: 1.35 !important;
+        height: auto !important;
+        display: block !important;
+        font-size: 10.5pt !important;
+        line-height: 1.3 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .header-info-table { 
         width: 100% !important; 
@@ -844,6 +845,8 @@
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
+    let productConfigMap = {};
+
     async function initMobileApp() {
       const statusEl = document.getElementById('syncStatus');
       try {
@@ -855,8 +858,13 @@
           .eq('id', 'global_config')
           .maybeSingle();
 
-        if (setRes && setRes.data && setRes.data.templates) {
-          customTemplates = setRes.data.templates;
+        if (setRes && setRes.data) {
+          if (setRes.data.templates) {
+            customTemplates = setRes.data.templates;
+          }
+          if (setRes.data.productConfigMap) {
+            productConfigMap = setRes.data.productConfigMap;
+          }
         }
 
         const { data, error } = await supabaseClient
@@ -1274,22 +1282,22 @@
             </div>
 
             <table class="footer-table">
-              <tr class="section-separator-top" style="height: 115px;">
-                <td style="width: 68%; vertical-align: top;">
+              <tr class="section-separator-top" style="height: 85px;">
+                <td style="width: 68%; vertical-align: top; padding: 6px 8px;">
                   <div>備註：<span class="fill-bold">${client.longRemark || ''}</span></div>
                 </td>
-                <td style="width: 32%; text-align: right; vertical-align: top;">
-                  <div style="font-size: 11pt; line-height: 1.5;">建議下次回診間隔：</div>
+                <td style="width: 32%; text-align: right; vertical-align: top; padding: 6px 8px;">
+                  <div style="font-size: 10.5pt; line-height: 1.4;">建議下次回診間隔：</div>
                 </td>
               </tr>
               <tr>
-                <td colspan="2" style="padding-top: 6px;">
+                <td colspan="2" style="padding: 4px 8px 6px 8px;">
                   <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
                       ${serviceDateText}
-                      <div style="font-size: 10pt; margin-top: 4px;"><span class="chk"></span>本次未看診，已建議應定期回診。</div>
+                      <div style="font-size: 9.5pt; margin-top: 2px;"><span class="chk"></span>本次未看診，已建議應定期回診。</div>
                     </div>
-                    <div style="color: #64748b; font-size: 11pt; font-weight: 500;">
+                    <div style="color: #64748b; font-size: 10pt; font-weight: 500;">
                       ${hintCheckItemsStr}
                     </div>
                   </div>
@@ -1640,92 +1648,7 @@
       filterPhotoClients();
     }
 
-    function renderPhotoClientList(list) {}
-
-    function renderPhotoClientList(list) {
-      const container = document.getElementById('photoClientList');
-      container.innerHTML = '';
-
-      if (list.length === 0) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:13px;">
-            查無相符客戶資料，請確認搜尋關鍵字。
-          </div>`;
-        return;
-      }
-
-      list.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'app-card';
-        div.style.padding = '14px';
-        div.style.marginBottom = '12px';
-        div.style.borderLeft = '4px solid var(--accent)';
-
-        const hasOdPhoto = Boolean(c.od_lens_photo);
-        const hasOsPhoto = Boolean(c.os_lens_photo);
-
-        div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-            <div>
-              <div style="font-weight:bold; font-size:16.5px; color:#1e293b;">
-                ${c.name} <span style="font-size:13px; color:#64748b; font-weight:normal;">(${c.code})</span>
-              </div>
-              <div style="font-size:12.5px; color:#475569; margin-top:3px;">
-                生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
-              </div>
-            </div>
-            <span style="font-size:11.5px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
-              ${c.product || '未分類'}
-            </span>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-            <!-- OD 側 -->
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:13px; font-weight:bold; color:#166534; margin-bottom:6px;">右眼 OD 鏡片</div>
-              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
-                ${hasOdPhoto 
-                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
-              </div>
-              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn photo-btn-od" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OD')">
-                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  ${hasOdPhoto ? '重選 OD' : '上傳 OD'}
-                </button>
-                ${hasOdPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除 OD 照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                ` : ''}
-              </div>
-            </div>
-
-            <!-- OS 側 -->
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:13px; font-weight:bold; color:#1e40af; margin-bottom:6px;">左眼 OS 鏡片</div>
-              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
-                ${hasOsPhoto 
-                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
-              </div>
-              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn photo-btn-os" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OS')">
-                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  ${hasOsPhoto ? '重選 OS' : '上傳 OS'}
-                </button>
-                ${hasOsPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除 OS 照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                ` : ''}
-              </div>
-            </div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
+   
 
     // 直接呼叫系統原生選單 (一鍵叫出相機 / 相簿)
     function triggerDirectUpload(code, eye) {
@@ -1737,39 +1660,7 @@
       }
     }
 
-    // ==========================================
-    // 鏡片照片刪除邏輯 (同步雲端資料庫)
-    // ==========================================
-    async function deleteLensPhoto(code, eye) {
-      const client = rawClients.find(c => c.code === code);
-      if (!client) return;
-
-      if (!confirm(`確定要刪除【${client.name} (${code})】的 ${eye} 鏡片照片嗎？`)) return;
-
-      showLoading("正在刪除照片並同步雲端...");
-
-      try {
-        const fieldKey = eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
-        const updateObj = {};
-        updateObj[fieldKey] = '';
-
-        const { error } = await supabaseClient
-          .from('customers')
-          .update(updateObj)
-          .eq('code', client.code);
-
-        if (error) throw error;
-
-        client[fieldKey] = '';
-        filterPhotoClients();
-        alert(`已成功刪除【${client.name}】${eye} 鏡片照片！`);
-      } catch (err) {
-        console.error("照片刪除失敗:", err);
-        alert("刪除失敗: " + (err.message || err));
-      } finally {
-        hideLoading();
-      }
-    }
+    
 
     // ==========================================
     // 鏡片大圖預覽 (Lightbox) 與直接刪除
@@ -1798,6 +1689,167 @@
       await deleteLensPhoto(currentPhotoTarget.code, currentPhotoTarget.eye);
     }
 
+    // 輔助函式：依商品類型取得照片欄位的標題與浮水印名稱
+    function getPhotoLabelsByProduct(productStr) {
+      const raw = (productStr || '').trim();
+      const conf = productConfigMap[raw] || {};
+      let cardType = conf.cardType;
+
+      if (!cardType) {
+        if (raw.includes('離焦大片') || raw.includes('離焦眼鏡') || raw.includes('HOYA')) {
+          cardType = 'defocus_lens';
+        } else if (raw.includes('日拋') || raw.includes('酷柏')) {
+          cardType = 'defocus_daily';
+        } else if (raw.includes('RGP') || raw.includes('硬式')) {
+          cardType = 'rgp';
+        } else if (raw.includes('眼鏡')) {
+          cardType = 'glasses';
+        } else {
+          cardType = 'ok';
+        }
+      }
+
+      // 眼鏡類或離焦大片：顯示「紀錄照 1」與「紀錄照 2」
+      if (cardType === 'defocus_lens' || cardType === 'glasses') {
+        return {
+          odTitle: "紀錄照 1",
+          osTitle: "紀錄照 2",
+          odShort: "紀錄 1",
+          osShort: "紀錄 2",
+          isRecordMode: true
+        };
+      }
+
+      // OK塑型片、日拋、RGP：維持「右眼 OD」與「左眼 OS」
+      return {
+        odTitle: "右眼 OD 鏡片",
+        osTitle: "左眼 OS 鏡片",
+        odShort: "OD",
+        osShort: "OS",
+        isRecordMode: false
+      };
+    }
+
+    function renderPhotoClientList(list) {
+      const container = document.getElementById('photoClientList');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:13px;">
+            查無相符客戶資料，請確認搜尋關鍵字。
+          </div>`;
+        return;
+      }
+
+      list.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'app-card';
+        div.style.padding = '14px';
+        div.style.marginBottom = '12px';
+        div.style.borderLeft = '4px solid var(--accent)';
+
+        const hasOdPhoto = Boolean(c.od_lens_photo);
+        const hasOsPhoto = Boolean(c.os_lens_photo);
+        const labels = getPhotoLabelsByProduct(c.product);
+
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+            <div>
+              <div style="font-weight:bold; font-size:16.5px; color:#1e293b;">
+                ${c.name} <span style="font-size:13px; color:#64748b; font-weight:normal;">(${c.code})</span>
+              </div>
+              <div style="font-size:12.5px; color:#475569; margin-top:3px;">
+                生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
+              </div>
+            </div>
+            <span style="font-size:11.5px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
+              ${c.product || '未分類'}
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <!-- 照片 1 (原 OD 欄位) -->
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:13px; font-weight:bold; color:#166534; margin-bottom:6px;">${labels.odTitle}</div>
+              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
+                ${hasOdPhoto 
+                  ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
+              </div>
+              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
+                <button type="button" class="photo-btn photo-btn-od" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OD')">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  ${hasOdPhoto ? `重選 ${labels.odShort}` : `上傳 ${labels.odShort}`}
+                </button>
+                ${hasOdPhoto ? `
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- 照片 2 (原 OS 欄位) -->
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div style="font-size:13px; font-weight:bold; color:#1e40af; margin-bottom:6px;">${labels.osTitle}</div>
+              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
+                ${hasOsPhoto 
+                  ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
+              </div>
+              <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
+                <button type="button" class="photo-btn photo-btn-os" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OS')">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  ${hasOsPhoto ? `重選 ${labels.osShort}` : `上傳 ${labels.osShort}`}
+                </button>
+                ${hasOsPhoto ? `
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function deleteLensPhoto(code, eye) {
+      const client = rawClients.find(c => c.code === code);
+      if (!client) return;
+
+      const labels = getPhotoLabelsByProduct(client.product);
+      const displayLabel = eye === 'OD' ? labels.odTitle : labels.osTitle;
+
+      if (!confirm(`確定要刪除【${client.name} (${code})】的 ${displayLabel} 嗎？`)) return;
+
+      showLoading("正在刪除照片並同步雲端...");
+
+      try {
+        const fieldKey = eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
+        const updateObj = {};
+        updateObj[fieldKey] = '';
+
+        const { error } = await supabaseClient
+          .from('customers')
+          .update(updateObj)
+          .eq('code', client.code);
+
+        if (error) throw error;
+
+        client[fieldKey] = '';
+        filterPhotoClients();
+        alert(`已成功刪除【${client.name}】${displayLabel}！`);
+      } catch (err) {
+        console.error("照片刪除失敗:", err);
+        alert("刪除失敗: " + (err.message || err));
+      } finally {
+        hideLoading();
+      }
+    }
+
     async function handleMobilePhotoSelected(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1819,9 +1871,12 @@
           maskedName = rawName[0] + 'O'.repeat(rawName.length - 2) + rawName.slice(-1);
         }
 
+        const labels = getPhotoLabelsByProduct(client.product);
+        const photoTagText = currentPhotoTarget.eye === 'OD' ? labels.odShort : labels.osShort;
+
         const watermarkInfo = {
           name: maskedName,
-          eye: currentPhotoTarget.eye,
+          eye: photoTagText,
           date: dateStr
         };
 
@@ -1841,7 +1896,7 @@
         client[fieldKey] = base64;
         filterPhotoClients();
 
-        alert(`🎉 客戶【${client.name} (${client.code})】${currentPhotoTarget.eye} 照片上傳成功！\n已壓印浮水印：${maskedName} ${currentPhotoTarget.eye} ${dateStr}`);
+        alert(`客戶【${client.name} (${client.code})】${photoTagText} 上傳成功！\n已壓印浮水印：${maskedName} ${photoTagText} ${dateStr}`);
       } catch (err) {
         console.error("照片上傳失敗:", err);
         alert("上傳失敗: " + (err.message || err));
