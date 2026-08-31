@@ -138,10 +138,6 @@
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Tesseract.js (穩定版) -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <!-- JsBarcode (純向量 SVG 條碼引擎，手機端與列印 100% 顯示) -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
   <style>
     :root {
@@ -160,7 +156,7 @@
       margin: 0;
       padding: 0;
       color: #1e293b;
-      padding-bottom: 70px;
+      padding-bottom: 20px;
     }
 
     .top-nav {
@@ -177,24 +173,6 @@
     }
     .top-nav h1 { font-size: 16px; margin: 0; font-weight: bold; }
     .status-pill { font-size: 11px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 12px; }
-
-    /* ==========================================
-       精美底部導覽列 (純向量 SVG、無 Emoji、專業質感)
-       ========================================== */
-    .bottom-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      height: 60px;
-      z-index: 50;
-      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.04);
-      padding: 4px 12px;
-      gap: 8px;
-    }
 
     .tab-item {
       flex: 1;
@@ -691,66 +669,8 @@
     <div id="syncStatus" class="status-pill">連線中...</div>
   </div>
 
-  <!-- 分頁一：三大要素 OCR 辨識與手動快搜列印 -->
-  <div id="tab-ocr" class="tab-content">
-    <div class="app-card">
-      <div class="card-title">
-        <span>🔍 手動搜尋病患（直接產單列印）</span>
-      </div>
-      <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-        支援輸入：編號、姓名、身分證、電話、生日7碼 (例: 1010101)。
-      </div>
-      
-      <!-- 搜尋列 -->
-      <div style="display: flex; gap: 8px; margin-bottom: 4px; align-items: center;">
-        <div style="position: relative; flex: 1; min-width: 0;">
-          <input type="text" id="ocrManualSearchInput" class="input-field" 
-                 placeholder="輸入編號/姓名/身分證/電話/生日..." 
-                 onkeydown="if(event.key === 'Enter'){ event.preventDefault(); filterManualOcrClients(); }"
-                 oninput="checkOcrClearBtnVisibility()"
-                 style="margin-bottom: 0; padding-right: 42px; font-size: 14.5px; height: 42px;">
-          <span id="clearOcrSearchBtn" onclick="clearManualOcrSearch()" 
-                style="position: absolute; right: 0; top: 0; bottom: 0; width: 42px; color: #94a3b8; font-weight: bold; cursor: pointer; display: none; font-size: 18px; align-items: center; justify-content: center; user-select: none;">✕</span>
-        </div>
-        <button type="button" class="btn btn-primary" onclick="filterManualOcrClients()" style="flex-shrink: 0; padding: 0 16px; white-space: nowrap; font-size: 14px; height: 42px;">
-          🔍 搜尋
-        </button>
-      </div>
-    </div> <!-- ★ 修正：補回手動搜尋卡片的閉合標籤 -->
-
-    <div class="app-card">
-      <div class="card-title">
-        <span>📷 拍照辨識門診名冊 (OCR)</span>
-      </div>
-      <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
-        拍攝含【姓名、身分證、病歷號】區塊，系統依「身分證命中」或「三擇二」自動比對並依生日月份排序。
-      </div>
-
-      <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleMultipleOcrUpload(event)">
-      
-      <button class="btn btn-primary btn-block" onclick="document.getElementById('ocrFileInput').click()" style="background: #0284c7;">
-        📷 拍照或選取名冊圖片 (可多張)
-      </button>
-    </div>
-
-    <!-- 比對 / 搜尋結果名單區 -->
-    <div id="ocrResultContainer" style="display: none;">
-      <div class="meta-summary">
-        <div style="display: flex; justify-content: space-between; font-weight: bold;">
-          <span>比對/搜尋結果：共 <b id="ocrMatchCount" style="color: var(--accent); font-size: 16px;">0</b> 位客戶</span>
-          <span style="font-size: 11.5px; color: #64748b;">(點擊卡片立即列印)</span>
-        </div>
-      </div>
-
-      <div class="card-title">
-        <span>回診單產出清單 (點擊產生 1:1 實體回診單)</span>
-      </div>
-      <div id="matchedClientList"></div>
-    </div>
-  </div>
-
-  <!-- 分頁二：鏡片照片拍攝 / 上傳 -->
-  <div id="tab-photo" class="tab-content active">
+  <!-- 主要工作區：鏡片照片搜尋與拍照上傳 -->
+  <div style="padding: 12px;">
     <div class="app-card">
       <div class="card-title">
         <span>🔍 客戶鏡片照片拍攝 / 上傳</span>
@@ -779,42 +699,18 @@
         搜尋符合：共 0 位客戶
       </div>
 
-      <div id="photoClientList" style="max-height: calc(100vh - 240px); overflow-y: auto;"></div>
+      <div id="photoClientList" style="max-height: calc(100vh - 180px); overflow-y: auto;"></div>
     </div>
   </div>
-
-  <!-- 雙上傳通道：相機直拍通道 / 檔案相簿選取通道 -->
-  <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMobilePhotoSelected(event)">
-  <input type="file" id="mobileGalleryInput" accept="image/*" style="display:none;" onchange="handleMobilePhotoSelected(event)">
 
   <!-- 單一標準檔案上傳通道 (交由 iOS / Android 系統原生呼叫相機與相簿) -->
   <input type="file" id="mobilePhotoInput" accept="image/*" style="display:none;" onchange="handleMobilePhotoSelected(event)">
 
-  <!-- 底部功能切換導覽列 -->
-  <div class="bottom-bar">
-    <div class="tab-item" onclick="switchMobileTab('tab-ocr', this)">
-      <svg viewBox="0 0 24 24">
-        <!-- 掃描辨識 / 文件產單圖示 -->
-        <path d="M4 7V4h3M17 4h3v3M4 17v3h3M20 17v3h-3M9 9h6M9 12h6M9 15h4" />
-      </svg>
-      <div class="tab-label">OCR 辨識 / 產單</div>
-    </div>
-    
-    <div class="tab-item active" onclick="switchMobileTab('tab-photo', this)">
-      <svg viewBox="0 0 24 24">
-        <!-- 鏡片相機拍攝圖示 -->
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-        <circle cx="12" cy="13" r="4" />
-      </svg>
-      <div class="tab-label">鏡片拍照上傳</div>
-    </div>
-  </div>
-
   <div id="loadingOverlay">
     <div class="spinner"></div>
     <div id="loadingText">處理中...</div>
-    <div id="ocrProgress" style="font-size: 12px; margin-top: 6px; opacity: 0.85;"></div>
   </div>
+
   <!-- 大圖預覽彈窗 (含刪除照片按鈕) -->
   <div id="imagePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; flex-direction: column;">
     <span onclick="closeImagePreview()" style="position: absolute; top: 16px; right: 20px; color: white; font-size: 30px; font-weight: bold; cursor: pointer; user-select: none;">✕</span>
@@ -829,23 +725,18 @@
     </div>
   </div>
 
-  <div id="printWrapper"></div>
-
   <script>
     const SUPABASE_URL = "https://wycoyydhcaeuabaelwdo.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Y295eWRoY2FldWFiYWVsd2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDk2MDUsImV4cCI6MjEwMzQ4NTYwNX0.fkTge9-CHTIIYhQOfMpEmkRM9vOleM6rGd-h4sYDzjw";
 
     let supabaseClient = null;
     let rawClients = [];
-    let customTemplates = [];
     let currentPhotoTarget = { code: "", eye: "OD" };
-    let ocrWorkerInstance = null;
+    let productConfigMap = {};
 
     if (window.supabase && window.supabase.createClient) {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
-
-    let productConfigMap = {};
 
     async function initMobileApp() {
       const statusEl = document.getElementById('syncStatus');
@@ -858,13 +749,8 @@
           .eq('id', 'global_config')
           .maybeSingle();
 
-        if (setRes && setRes.data) {
-          if (setRes.data.templates) {
-            customTemplates = setRes.data.templates;
-          }
-          if (setRes.data.productConfigMap) {
-            productConfigMap = setRes.data.productConfigMap;
-          }
+        if (setRes && setRes.data && setRes.data.productConfigMap) {
+          productConfigMap = setRes.data.productConfigMap;
         }
 
         const { data, error } = await supabaseClient
@@ -877,11 +763,6 @@
         statusEl.innerText = `已連線 (${rawClients.length} 筆)`;
         statusEl.style.background = "#16a34a";
 
-        const photoTabBtn = document.querySelectorAll('.bottom-bar .tab-item')[1];
-        if (typeof switchMobileTab === 'function') {
-          switchMobileTab('tab-photo', photoTabBtn || document.createElement('div'));
-        }
-
         filterPhotoClients();
       } catch (err) {
         console.error("手機版連線初始化錯誤:", err);
@@ -890,707 +771,18 @@
       }
     }
 
-    function switchMobileTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      if (el) el.classList.add('active');
-    }
-
-    // ==========================================
-    // 純 SVG 向量條碼產生器 (列印專用：黑白分明、絕不變黑磚)
-    // ==========================================
-    function getBarcodeSVGHtml(text) {
-      if (!text || String(text).trim() === "") return "";
-      const cleanText = String(text).trim().replace(/\*/g, '');
-      try {
-        const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        if (typeof JsBarcode === "function") {
-          JsBarcode(svgNode, cleanText, {
-            format: "CODE39",
-            width: 1.35,
-            height: 32,
-            displayValue: false,
-            margin: 4,
-            background: "",
-            lineColor: "#000000"
-          });
-          svgNode.setAttribute("style", "max-width: 95%; height: 32px; display: block; margin: 0 auto;");
-          return new XMLSerializer().serializeToString(svgNode);
-        }
-      } catch (e) {
-        console.error("SVG 條碼生成錯誤:", e);
-      }
-      return `<div style="font-weight:bold;">${cleanText}</div>`;
-    }
-
-    // ==========================================
-    // 總表 1:1 實體回診單產生引擎 (完全對齊電腦版輸出)
-    // ==========================================
-    function printSingle1to1Checklist(client) {
-      const daysMap = ["日", "一", "二", "三", "四", "五", "六"];
-      const now = new Date();
-      const weekStr = daysMap[now.getDay()];
-      const checkDateFull = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} (${weekStr})`;
-
-      const clientProd = (client.product || "").trim().toLowerCase();
-      let matchedTpl = customTemplates.find(t => {
-        if (!t.matchProducts) return false;
-        const prods = t.matchProducts.split(',').map(s => s.trim().toLowerCase());
-        return prods.some(pr => pr && clientProd.includes(pr));
-      });
-      if (!matchedTpl) matchedTpl = customTemplates[0] || {};
-
-      const hasOD = Boolean(client.odChangeDate && client.odChangeDate.trim());
-      const hasOS = Boolean(client.osChangeDate && client.osChangeDate.trim());
-      let wearMode = "OU 配戴";
-      if (hasOD && !hasOS) wearMode = "OD 配戴";
-      else if (!hasOD && hasOS) wearMode = "OS 配戴";
-
-      let totalTreatmentStr = client.odDuration || "2年 6月 3天";
-      if (client.firstPickup && client.firstPickup.includes('/')) {
-        const fp = client.firstPickup.split('/');
-        const fpDate = new Date(parseInt(fp[0], 10), parseInt(fp[1], 10) - 1, parseInt(fp[2], 10));
-        if (!isNaN(fpDate.getTime())) {
-          const diffDays = Math.max(0, Math.floor((now.getTime() - fpDate.getTime()) / (1000 * 60 * 60 * 24)));
-          totalTreatmentStr = `${Math.floor(diffDays / 365)}年 ${Math.floor((diffDays % 365) / 30)}月 ${diffDays % 30}天`;
-        }
-      }
-
-      let ageStr = "";
-      if (client.birthday && client.birthday.includes('/')) {
-        const bYear = parseInt(client.birthday.split('/')[0], 10);
-        ageStr = String(now.getFullYear() - 1911 - bYear);
-      }
-
-      const doctorCheckPeriod = 12;
-      let timeDiffStr = "尚未達檢查期";
-      let needALCheck = false;
-
-      const lastAlDateStr = client.alCheckDate || client.lastVisit || "";
-      if (lastAlDateStr && lastAlDateStr.includes('/')) {
-        const lp = lastAlDateStr.split('/');
-        const lpDate = new Date(parseInt(lp[0], 10), parseInt(lp[1], 10) - 1, parseInt(lp[2], 10));
-        if (!isNaN(lpDate.getTime())) {
-          const diffDays = Math.max(0, Math.floor((now.getTime() - lpDate.getTime()) / (1000 * 60 * 60 * 24)));
-          const diffMonths = Math.floor(diffDays / 30);
-          timeDiffStr = `${Math.floor(diffDays / 365)} 年 ${diffMonths % 12}月 ${diffDays % 30}天 前`;
-          if (diffMonths >= doctorCheckPeriod) needALCheck = true;
-        }
-      }
-
-      function getLensInfo(changeDateStr) {
-        if (!changeDateStr || !changeDateStr.includes('/')) return { str: "無資料", advice: "" };
-        const cp = changeDateStr.split('/');
-        const cDate = new Date(parseInt(cp[0], 10), parseInt(cp[1], 10) - 1, parseInt(cp[2], 10));
-        if (isNaN(cDate.getTime())) return { str: "無資料", advice: "" };
-
-        const diffDays = Math.max(0, Math.floor((now.getTime() - cDate.getTime()) / (1000 * 60 * 60 * 24)));
-        const diffMonths = Math.floor(diffDays / 30);
-        const yCnt = Math.floor(diffDays / 365);
-        const mCnt = Math.floor((diffDays % 365) / 30);
-        const dCnt = diffDays % 30;
-
-        const t1 = matchedTpl.threshold1 !== undefined ? matchedTpl.threshold1 : 18;
-        const t2 = matchedTpl.threshold2 !== undefined ? matchedTpl.threshold2 : 24;
-        let adviceResult = "";
-        if (diffMonths >= t2) adviceResult = matchedTpl.adviceText2 || '已超過年限建議換片';
-        else if (diffMonths >= t1) adviceResult = matchedTpl.adviceText1 || '鏡片年限已近建議檢查';
-
-        return { str: `${yCnt}年 ${mCnt}月 ${dCnt}天`, advice: adviceResult };
-      }
-
-      const odLens = getLensInfo(client.odChangeDate);
-      const osLens = getLensInfo(client.osChangeDate);
-
-      const checkItems = ["VA"];
-      if (matchedTpl.needTopo !== false) checkItems.push("TOPO");
-      if (needALCheck) checkItems.push("AL");
-      const hintCheckItemsStr = checkItems.join(" + ");
-
-      const rawDisc = (matchedTpl.discomfortOptions || "").split(',').map(s => s.trim());
-      let discomfortHTML = `<div class="discomfort-grid-8">`;
-      for (let i = 0; i < 8; i++) {
-        const opt = rawDisc[i];
-        if (opt) {
-          if (opt.startsWith('_')) {
-            discomfortHTML += `<div class="grid-item-inline">${opt.substring(1)}</div>`;
-          } else {
-            discomfortHTML += `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>`;
-          }
-        } else {
-          discomfortHTML += `<div></div>`;
-        }
-      }
-      discomfortHTML += `</div>`;
-
-      const rawOpts = (matchedTpl.statusOptions || "").split(',').map(s => s.trim());
-      let statusOptionsHTML = `<div class="status-grid-12">`;
-      for (let i = 0; i < 12; i++) {
-        const opt = rawOpts[i];
-        if (opt) {
-          if (opt.startsWith('_')) {
-            statusOptionsHTML += `<div class="grid-item-inline">${opt.substring(1)}</div>`;
-          } else {
-            statusOptionsHTML += `<div class="grid-item-inline"><span class="chk"></span>${opt}</div>`;
-          }
-        } else {
-          statusOptionsHTML += `<div></div>`;
-        }
-      }
-      statusOptionsHTML += `</div>`;
-
-      function formatCheckOptions(optsStr) {
-        if (!optsStr) return '';
-        return optsStr.split(',').map(s => s.trim()).filter(Boolean).map(o => `<span class="chk"></span>${o}`).join('&nbsp;&nbsp;');
-      }
-
-      const cleanCode = String(client.code || '').trim();
-      const cleanId = String(client.idNumber || client.code || '').trim();
-
-      const codeBarcodeSvg = getBarcodeSVGHtml(cleanCode);
-      const idBarcodeSvg = getBarcodeSVGHtml(cleanId);
-
-      let serviceDateText = "";
-      if (client.serviceDate && client.serviceDate.includes('/')) {
-        const sp = client.serviceDate.split('/');
-        const sDate = new Date(parseInt(sp[0], 10), parseInt(sp[1], 10) - 1, parseInt(sp[2], 10));
-        if (!isNaN(sDate.getTime())) {
-          const diffDays = Math.max(0, Math.floor((now.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)));
-          const yCnt = Math.floor(diffDays / 365);
-          const mCnt = Math.floor((diffDays % 365) / 30);
-          const dCnt = diffDays % 30;
-
-          let diffStr = "";
-          if (yCnt > 0) {
-            diffStr = `${yCnt}年${mCnt}月${dCnt}天前`;
-          } else if (mCnt > 0) {
-            diffStr = `${mCnt}月${dCnt}天前`;
-          } else {
-            diffStr = `${dCnt}天前`;
-          }
-
-          serviceDateText = `<div>售服於 &nbsp;<span class="fill-bold">${client.serviceDate}</span> &nbsp;， ${diffStr}。</div>`;
-        }
-      }
-
-      const fullHTML = `
-        <div class="print-page-item">
-          <div class="print-sheet">
-            <div>
-              <table class="header-info-table">
-                <tr>
-                  <td style="width: 22%;">姓名：<span class="fill-bold" style="font-size: 13pt;">${client.name}</span></td>
-                  <td style="width: 22%;">生日：<span class="fill-bold">${client.birthday || ''}</span></td>
-                  <td style="width: 28%;">檢查日：<span class="fill-bold">${checkDateFull}</span></td>
-                  <td style="width: 14%;">DR. <span class="fill-bold">王醫師</span></td>
-                  <td style="width: 14%;">掛號：<span class="fill-bold"></span></td>
-                </tr>
-              </table>
-
-              <table class="main-form-table">
-                <colgroup>
-                  <col style="width: 27%;">
-                  <col style="width: 20%;">
-                  <col style="width: 14%;">
-                  <col style="width: 39%;">
-                  <col style="width: 20%;">
-                </colgroup>
-                <tr style="height: 52px;">
-                  <td style="background: #ffffff !important; vertical-align: middle; padding: 4px 8px; border-right: none; text-align: center;">
-                    <div style="display:flex; justify-content:center; align-items:center; height:36px; max-width:90%; margin:0 auto; overflow:hidden;">
-                      ${codeBarcodeSvg}
-                    </div>
-                    <div style="font-size: 10pt; font-weight: bold; margin-top: 1px;">${cleanCode}</div>
-                  </td>
-                  <td colspan="3" style="background: #e5e7eb !important; text-align: center; font-size: 13.5pt; font-weight: bold; border-left: none; border-right: none;">
-                    ${matchedTpl.titleDisplay || client.product || 'OK塑型片'}
-                  </td>
-                  <td style="background: #e5e7eb !important; text-align: right; font-size: 12pt; font-weight: bold; padding-right: 12px; border-left: none;">
-                    ${wearMode}
-                  </td>
-                </tr>
-                <tr style="height: 48px;">
-                  <td style="font-weight: bold; text-align: center; line-height: 1.25;">
-                    兒控總療程時間<br><span style="font-size: 8.5pt; font-weight: normal;">(非鏡片時間)</span>
-                  </td>
-                  <td style="font-size: 11pt; text-align: center; font-weight: bold;">
-                    ${totalTreatmentStr}
-                  </td>
-                  <td style="font-weight: bold; text-align: center; padding: 2px 2px; font-size: 10.5pt;" rowspan="3">
-                    不適問題<br><br><span class="chk"></span>無
-                  </td>
-                  <td colspan="2" rowspan="3" style="padding: 6px 10px; vertical-align: middle;">
-                    ${discomfortHTML}
-                  </td>
-                </tr>
-                <tr style="height: 45px;">
-                  <td style="font-weight: bold; text-align: center; font-size: 13pt;" rowspan="2">
-                    ${matchedTpl.vaTitle || 'VA'}
-                  </td>
-                  <td style="padding: 4px 6px; font-size: 11pt; height: 40px; text-align: left;"><b>OD</b></td>
-                </tr>
-                <tr style="height: 45px;">
-                  <td style="padding: 4px 6px; font-size: 11pt; height: 40px; text-align: left;"><b>OS</b></td>
-                </tr>
-                <tr style="height: 44px;">
-                  <td style="font-weight: bold; text-align: center; font-size: 11pt;">
-                    ${matchedTpl.wearLabel || '每日配戴時間'}
-                  </td>
-                  <td style="text-align: center; font-size: 11pt; font-weight: bold;">
-                    ${matchedTpl.wearUnit || '小時'}
-                  </td>
-                  <td colspan="3" style="background-color: #fafafa;"></td>
-                </tr>
-                <tr class="section-separator-top" style="height: 48px;">
-                  <td style="background: #ffffff !important; text-align: center; vertical-align: middle; padding: 6px 8px;" rowspan="2">
-                    <div style="display:flex; justify-content:center; align-items:center; height:34px;">
-                      ${idBarcodeSvg}
-                    </div>
-                    <div style="font-weight: bold; font-size: 9.5pt; margin-top: 1px;">${cleanId}</div>
-                    <div style="font-weight: bold; margin-top: 2px; font-size: 11pt; background: #e5e7eb !important; border-radius: 2px; padding: 1px 0;">眼軸追蹤</div>
-                    <div style="font-size: 9.5pt; margin-top: 1px;">${ageStr} 歲</div>
-                  </td>
-                  <td colspan="4" style="background: #e5e7eb !important; font-size: 10.5pt; padding: 6px 12px;">
-                    上次紀錄：&nbsp;<span class="fill-bold">${lastAlDateStr}</span>&nbsp;&nbsp;、&nbsp;&nbsp;${timeDiffStr}&nbsp;&nbsp;&nbsp;&nbsp;${needALCheck ? '<span style="color:#d63031;font-weight:bold;">★需檢測</span>' : '<span>未達檢查期</span>'}
-                  </td>
-                </tr>
-                <tr style="height: 85px;">
-                  <td colspan="1" style="padding: 6px 12px; font-size: 11.5pt; vertical-align: middle; width: 40%;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                      <span style="font-weight: bold; width: 25px;">OD:</span>
-                      <span class="fill-bold" style="font-size: 10pt;">${client.alOD || '____'}</span>
-                      <span style="font-size: 5pt;">mm</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span style="font-weight: bold; width: 25px;">OS:</span>
-                      <span class="fill-bold" style="font-size: 10pt;">${client.alOS || '____'}</span>
-                      <span style="font-size: 5pt;">mm</span>
-                    </div>
-                  </td>
-                  <td colspan="3" style="padding: 6px 12px; vertical-align: middle; width: 60%;">
-                    <div style="display: flex; align-items: center; height: 100%; padding: 4px 8px;">
-                      <table style="border: none !important; border-collapse: collapse;">
-                        <tr>
-                          <td style="font-weight: bold; width: 45px; border:none;" rowspan="2">本次</td>
-                          <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OD:</td>
-                          <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
-                          <td style="width: 35px; border:none;">mm</td>
-                          <td style="border:none;"></td>
-                        </tr>
-                        <tr>
-                          <td style="font-weight: bold; width: 35px; text-align: right; border:none; padding-right: 4px;">OS:</td>
-                          <td style="width: 100px; border:none;"><span style="border-bottom: 1.5px solid #000; width: 95px; display: inline-block; height: 18px;"></span></td>
-                          <td style="width: 35px; border:none;">mm</td>
-                          <td style="border:none;"></td>
-                        </tr>
-                      </table>
-                    </div>
-                  </td>
-                </tr>
-                <tr class="section-separator-top" style="height: 48px;">
-                  <td style="background: #e5e7eb !important; font-weight: bold; text-align: center; font-size: 11pt;">使用 Atropine</td>
-                  <td colspan="4" style="background: #e5e7eb !important; padding: 4px 10px; font-size: 10.5pt;">
-                    <span class="chk"></span>無&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.01%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.05%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>0.125%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="chk"></span>其他：
-                  </td>
-                </tr>
-                <tr class="section-separator-top" style="height: 48px;">
-                  <td colspan="5" style="background-color: #c0c0c0 !important; color: #000; text-align: center; font-weight: bold; font-size: 11pt; padding: 4px !important;">
-                    以下 若非 OK ，部分選項不顯示
-                  </td>
-                </tr>
-                <tr style="height: 130px;">
-                  <td style="text-align: center; font-weight: bold; font-size: 12pt; vertical-align: middle;">
-                    ${matchedTpl.statusTitle || '塑形狀況'}
-                  </td>
-                  <td colspan="4" style="padding: 8px 10px;">
-                    ${statusOptionsHTML}
-                  </td>
-                </tr>
-                <tr class="section-separator-top" style="height: 48px;">
-                  <td colspan="5" class="banner-lens-header">
-                    <span class="banner-lens-title">鏡 片 檢 查</span>
-                    <span class="banner-lens-notice">OK鏡片檢查過程可能產生損耗 已向家長說明無不適不檢查</span>
-                  </td>
-                </tr>
-                <tr style="height: 220px;">
-                  <td colspan="5" class="lens-row-wrapper">
-                    <div class="lens-row-container">
-                      <div class="lens-box-od">
-                        <div class="lens-side-info">
-                          <div style="font-size: 16pt; font-weight: bold;">OD</div>
-                          <div style="font-size: 9.5pt; margin: 4px 0;"><span class="chk"></span>無檢查</div>
-                          <div style="margin-top: 12px; font-size: 9.5pt;">鏡片使用</div>
-                          <div style="font-size: 11pt; font-weight: bold; margin-top: 3px;">${odLens.str}</div>
-                          ${odLens.advice ? `<div style="margin-top: 8px;"><span class="badge-custom-alert">${odLens.advice}</span></div>` : ''}
-                        </div>
-                        <div class="lens-side-checks">
-                          <div class="lens-check-block">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <span style="font-weight: bold;">${matchedTpl.odCleanTitle || '清潔狀況 (蛋白)'}</span>
-                              <span class="target-circle"></span>
-                            </div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odCleanOpts || '良好, 輕微, 明顯, 嚴重')}</div>
-                          </div>
-                          <div class="lens-check-block">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <span style="font-weight: bold;">${matchedTpl.odScratchTitle || '刮傷'}</span>
-                              <span class="target-circle"></span>
-                            </div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odScratchOpts || '無, 輕微, 中度, 嚴重')}</div>
-                          </div>
-                          <div class="lens-check-block">
-                            <div style="font-weight: bold;">建議：</div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.odAdviceOpts || '繼續保持, 注意清潔, 帶來檢查, 鏡片年限已近')}</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="lens-box-os">
-                        <div class="lens-side-info">
-                          <div style="font-size: 16pt; font-weight: bold;">OS</div>
-                          <div style="font-size: 9.5pt; margin: 4px 0;"><span class="chk"></span>無檢查</div>
-                          <div style="margin-top: 12px; font-size: 9.5pt;">鏡片使用</div>
-                          <div style="font-size: 11pt; font-weight: bold; margin-top: 3px;">${osLens.str}</div>
-                          ${osLens.advice ? `<div style="margin-top: 8px;"><span class="badge-custom-alert">${osLens.advice}</span></div>` : ''}
-                        </div>
-                        <div class="lens-side-checks">
-                          <div class="lens-check-block">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <span style="font-weight: bold;">${matchedTpl.osCleanTitle || '清潔狀況 (蛋白)'}</span>
-                              <span class="target-circle"></span>
-                            </div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osCleanOpts || '良好, 輕微, 明顯, 嚴重')}</div>
-                          </div>
-                          <div class="lens-check-block">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <span style="font-weight: bold;">${matchedTpl.osScratchTitle || '刮傷'}</span>
-                              <span class="target-circle"></span>
-                            </div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osScratchOpts || '無, 輕微, 中度, 嚴重')}</div>
-                          </div>
-                          <div class="lens-check-block">
-                            <div style="font-weight: bold;">建議：</div>
-                            <div style="margin-top: 3px;">${formatCheckOptions(matchedTpl.osAdviceOpts || '繼續保持, 注意清潔, 帶來檢查, 鏡片年限已近')}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </div>
-
-            <table class="footer-table">
-              <tr class="section-separator-top" style="height: 85px;">
-                <td style="width: 68%; vertical-align: top; padding: 6px 8px;">
-                  <div>備註：<span class="fill-bold">${client.longRemark || ''}</span></div>
-                </td>
-                <td style="width: 32%; text-align: right; vertical-align: top; padding: 6px 8px;">
-                  <div style="font-size: 10.5pt; line-height: 1.4;">建議下次回診間隔：</div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding: 4px 8px 6px 8px;">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div>
-                      ${serviceDateText}
-                      <div style="font-size: 9.5pt; margin-top: 2px;"><span class="chk"></span>本次未看診，已建議應定期回診。</div>
-                    </div>
-                    <div style="color: #64748b; font-size: 10pt; font-weight: 500;">
-                      ${hintCheckItemsStr}
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </div>
-        </div>
-      `;
-
-      const printWrapper = document.getElementById('printWrapper');
-      printWrapper.innerHTML = fullHTML;
-      window.print();
-    }
-
-    // ==========================================
-    // 分頁一：手動快搜病患（直接產單）
-    // ==========================================
-    function checkOcrClearBtnVisibility() {
-      const inputEl = document.getElementById('ocrManualSearchInput');
-      const clearBtn = document.getElementById('clearOcrSearchBtn');
-      if (inputEl && clearBtn) {
-        clearBtn.style.display = inputEl.value.trim() ? 'flex' : 'none';
-      }
-    }
-
-    function clearManualOcrSearch() {
-      const inputEl = document.getElementById('ocrManualSearchInput');
-      if (inputEl) inputEl.value = '';
-      checkOcrClearBtnVisibility();
-      document.getElementById('ocrResultContainer').style.display = 'none';
-      document.getElementById('matchedClientList').innerHTML = '';
-    }
-
-    function filterManualOcrClients() {
-      const inputEl = document.getElementById('ocrManualSearchInput');
-      const q = (inputEl ? inputEl.value : '').trim().toLowerCase();
-      const qCleanDigits = q.replace(/\D/g, '');
-
-      checkOcrClearBtnVisibility();
-
-      if (!q) {
-        return alert("請先輸入欲搜尋的病患編號、姓名、身分證、電話或生日！");
-      }
-
-      const filtered = rawClients.filter(c => {
-        const cCode = String(c.code || '').toLowerCase();
-        const cName = String(c.name || '').toLowerCase();
-        const cId = String(c.idNumber || '').toLowerCase();
-        const cPhone = String(c.phone || '').replace(/\D/g, '');
-        const cBirthday = String(c.birthday || '').trim();
-        const cBirthDigits = cBirthday.replace(/\D/g, '');
-
-        if (cCode.includes(q)) return true;
-        if (cName.includes(q)) return true;
-        if (cId.includes(q)) return true;
-        if (qCleanDigits && cPhone.includes(qCleanDigits)) return true;
-        if (cBirthday.includes(q)) return true;
-        if (qCleanDigits && cBirthDigits.includes(qCleanDigits)) return true;
-
-        return false;
-      });
-
-      const matchedList = filtered.map(c => {
-        let bMonth = 99, bYear = 999;
-        const cBirthday = String(c.birthday || '').trim();
-        if (cBirthday) {
-          const cleanB = cBirthday.replace(/\D/g, '');
-          if (cleanB.length === 7) {
-            bYear = parseInt(cleanB.substring(0, 3), 10);
-            bMonth = parseInt(cleanB.substring(3, 5), 10);
-          } else if (cleanB.length === 6) {
-            bYear = parseInt(cleanB.substring(0, 2), 10);
-            bMonth = parseInt(cleanB.substring(2, 4), 10);
-          }
-        }
-        return { client: c, bMonth, bYear, reasons: "手動快搜命中" };
-      });
-
-      renderMatchedOcrClients(matchedList);
-    }
-
-    // ==========================================
-    // 強化影像前處理：自適應對比增強與文字邊緣銳化
-    // ==========================================
-    function preprocessImageForText(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-          const img = new Image();
-          img.src = e.target.result;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            const maxW = 2000;
-            let w = img.width;
-            let h = img.height;
-            if (w > maxW) {
-              h = Math.round((h * maxW) / w);
-              w = maxW;
-            }
-
-            canvas.width = w;
-            canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-
-            const imgData = ctx.getImageData(0, 0, w, h);
-            const d = imgData.data;
-
-            for (let i = 0; i < d.length; i += 4) {
-              const r = d[i], g = d[i + 1], b = d[i + 2];
-              let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-              if (gray > 155) gray = 255;
-              else if (gray < 125) gray = 0;
-
-              d[i] = gray;
-              d[i + 1] = gray;
-              d[i + 2] = gray;
-            }
-
-            ctx.putImageData(imgData, 0, 0);
-            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.92);
-          };
-          img.onerror = reject;
-        };
-        reader.onerror = reject;
-      });
-    }
-
-    // ==========================================
-    // 多圖高速批次 OCR 辨識
-    // ==========================================
-    async function handleMultipleOcrUpload(event) {
-      const files = Array.from(event.target.files);
-      if (files.length === 0) return;
-
-      showLoading("啟動光學文字辨識引擎...", `共選取 ${files.length} 張名冊圖片...`);
-
-      try {
-        if (!ocrWorkerInstance) {
-          showLoading("載入高精準繁中+英數字庫中...", "請稍候...");
-          ocrWorkerInstance = await Tesseract.createWorker(['chi_tra', 'eng']);
-        }
-
-        let combinedOcrText = "";
-
-        for (let idx = 0; idx < files.length; idx++) {
-          const file = files[idx];
-          showLoading(`辨識第 ${idx + 1} / ${files.length} 張圖片中...`, file.name);
-
-          const processedBlob = await preprocessImageForText(file);
-          const ret = await ocrWorkerInstance.recognize(processedBlob);
-          combinedOcrText += "\n" + (ret.data.text || "");
-        }
-
-        console.log("=== OCR 辨識純文字 ===\n", combinedOcrText);
-        parseOcrThreeElements(combinedOcrText);
-
-      } catch (err) {
-        console.error("OCR 錯誤:", err);
-        alert("辨識過程發生異常: " + err.message);
-      } finally {
-        hideLoading();
-      }
-    }
-
-    // ==========================================
-    // 三大要素比對引擎 + 生日月份與年份排序
-    // ==========================================
-    function parseOcrThreeElements(ocrText) {
-      if (!ocrText || !ocrText.trim()) {
-        alert("未能辨識出任何文字，請確認照片清晰度。");
-        return;
-      }
-
-      const fullText = ocrText
-        .replace(/[\[\{]/g, '(')
-        .replace(/[\]\}]/g, ')')
-        .replace(/O(?=\d)/g, '0')
-        .replace(/(?<=\d)O/g, '0');
-
-      const matchedList = [];
-
-      rawClients.forEach(client => {
-        const cName = String(client.name || '').trim();
-        const cId = String(client.idNumber || '').trim().toUpperCase();
-        const cBirthday = String(client.birthday || '').trim();
-
-        let b7Code = "";
-        let bMonth = 99;
-        let bYear = 999;
-
-        if (cBirthday) {
-          const cleanB = cBirthday.replace(/\D/g, '');
-          if (cleanB.length === 7) {
-            bYear = parseInt(cleanB.substring(0, 3), 10);
-            bMonth = parseInt(cleanB.substring(3, 5), 10);
-          } else if (cleanB.length === 6) {
-            bYear = parseInt(cleanB.substring(0, 2), 10);
-            bMonth = parseInt(cleanB.substring(2, 4), 10);
-          }
-        }
-
-        let matchCount = 0;
-        let reasons = [];
-
-        const isIdMatched = (cId && cId.length >= 8 && fullText.toUpperCase().includes(cId));
-        if (isIdMatched) {
-          matchCount++;
-          reasons.push("身分證符合");
-        }
-
-        const isNameMatched = (cName && cName.length >= 2 && fullText.includes(cName));
-        if (isNameMatched) {
-          matchCount++;
-          reasons.push("姓名符合");
-        }
-
-        const isBirthMatched = (b7Code && b7Code.length === 7 && fullText.includes(b7Code));
-        if (isBirthMatched) {
-          matchCount++;
-          reasons.push("病歷號生日符合");
-        }
-
-        if (isIdMatched || matchCount >= 2) {
-          if (!matchedList.some(m => m.client.code === client.code)) {
-            matchedList.push({
-              client: client,
-              bMonth: bMonth,
-              bYear: bYear,
-              reasons: reasons.join(' + ')
-            });
-          }
-        }
-      });
-
-      matchedList.sort((a, b) => {
-        if (a.bMonth !== b.bMonth) return a.bMonth - b.bMonth;
-        return a.bYear - b.bYear;
-      });
-
-      renderMatchedOcrClients(matchedList);
-    }
-
-    function renderMatchedOcrClients(list) {
-      const container = document.getElementById('matchedClientList');
-      const countEl = document.getElementById('ocrMatchCount');
-      document.getElementById('ocrResultContainer').style.display = 'block';
-
-      countEl.innerText = list.length;
-      container.innerHTML = '';
-
-      if (list.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:13px;">未在本次比對/搜尋中找到相符客戶。</div>`;
-        return;
-      }
-
-      list.forEach(item => {
-        const c = item.client;
-        const div = document.createElement('div');
-        div.className = 'client-item-card';
-        div.onclick = () => printSingle1to1Checklist(c);
-
-        div.innerHTML = `
-          <div>
-            <div style="font-weight: bold; font-size: 15px; color: #1e293b;">
-              ${c.name} <span style="font-size: 12px; color: #64748b;">(${c.code})</span>
-            </div>
-            <div style="font-size: 12px; color: #475569; margin-top: 2px;">
-              生日：<b>${c.birthday || '-'}</b> ｜ 商品：<span style="color:#0284c7; font-weight:bold;">${c.product || '未分類'}</span>
-            </div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 11px; background:#eff6ff; color:#1d4ed8; padding:4px 10px; border-radius:4px; font-weight:bold;">
-              🖨️ 列印單據
-            </div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    // ==========================================
-    // 分頁二：鏡片照片快搜核心
-    // ==========================================
     function checkClearBtnVisibility() {
       const inputEl = document.getElementById('clientSearchInput');
       const clearBtn = document.getElementById('clearSearchBtn');
       if (inputEl && clearBtn) {
         clearBtn.style.display = inputEl.value.trim() ? 'flex' : 'none';
       }
+    }
+
+    function clearPhotoSearch() {
+      const inputEl = document.getElementById('clientSearchInput');
+      if (inputEl) inputEl.value = '';
+      filterPhotoClients();
     }
 
     function filterPhotoClients() {
@@ -1642,15 +834,6 @@
       renderPhotoClientList(filtered);
     }
 
-    function clearPhotoSearch() {
-      const inputEl = document.getElementById('clientSearchInput');
-      if (inputEl) inputEl.value = '';
-      filterPhotoClients();
-    }
-
-   
-
-    // 直接呼叫系統原生選單 (一鍵叫出相機 / 相簿)
     function triggerDirectUpload(code, eye) {
       currentPhotoTarget = { code, eye };
       const fileInp = document.getElementById('mobilePhotoInput');
@@ -1660,11 +843,6 @@
       }
     }
 
-    
-
-    // ==========================================
-    // 鏡片大圖預覽 (Lightbox) 與直接刪除
-    // ==========================================
     function openImagePreview(code, eye, imgSrc) {
       if (!imgSrc) return;
       currentPhotoTarget = { code, eye };
@@ -1689,7 +867,6 @@
       await deleteLensPhoto(currentPhotoTarget.code, currentPhotoTarget.eye);
     }
 
-    // 輔助函式：依商品類型取得照片欄位的標題與浮水印名稱
     function getPhotoLabelsByProduct(productStr) {
       const raw = (productStr || '').trim();
       const conf = productConfigMap[raw] || {};
@@ -1709,7 +886,6 @@
         }
       }
 
-      // 眼鏡類或離焦大片：顯示「紀錄照 1」與「紀錄照 2」
       if (cardType === 'defocus_lens' || cardType === 'glasses') {
         return {
           odTitle: "紀錄照 1",
@@ -1720,7 +896,6 @@
         };
       }
 
-      // OK塑型片、日拋、RGP：維持「右眼 OD」與「左眼 OS」
       return {
         odTitle: "右眼 OD 鏡片",
         osTitle: "左眼 OS 鏡片",
@@ -1728,6 +903,25 @@
         osShort: "OS",
         isRecordMode: false
       };
+    }
+
+    function hexToRgba(hex, alpha = 0.1) {
+      if (!hex || !hex.startsWith('#') || hex.length < 7) return `rgba(92, 138, 107, ${alpha})`;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // 自動計算背景反差文字顏色 (深底白字、淺底黑字)
+    function getContrastTextColor(hex) {
+      if (!hex || !hex.startsWith('#') || hex.length < 7) return '#ffffff';
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      // YIQ 亮度公式 (大於 160 代表是明亮淺色)
+      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+      return (yiq >= 160) ? '#0f172a' : '#ffffff';
     }
 
     function renderPhotoClientList(list) {
@@ -1743,69 +937,114 @@
       }
 
       list.forEach(c => {
+        const rawProd = (c.product || '').trim();
+        const conf = productConfigMap[rawProd] || {};
+        const badgeColor = conf.badgeColor || '#5c8a6b';
+        const odColor = conf.odColor || '#5c8a6b';
+        const osColor = conf.osColor || '#3b82f6';
+        const displayProductName = conf.displayName || rawProd || '未分類';
+
         const div = document.createElement('div');
         div.className = 'app-card';
         div.style.padding = '14px';
-        div.style.marginBottom = '12px';
-        div.style.borderLeft = '4px solid var(--accent)';
+        div.style.marginBottom = '14px';
+        div.style.borderRadius = '8px';
+        div.style.border = '1px solid #e2e8f0';
 
         const hasOdPhoto = Boolean(c.od_lens_photo);
         const hasOsPhoto = Boolean(c.os_lens_photo);
         const labels = getPhotoLabelsByProduct(c.product);
 
+        const lastVisitStr = c.lastVisit || '-';
+        const odTimeStr = c.odDuration || c.odChangeDate || '-';
+        const osTimeStr = c.osDuration || c.osChangeDate || '-';
+
+        // 自適應方塊樣式 (同 LIFF 客戶端質感)
+        const odBoxStyle = `background: ${hexToRgba(odColor, 0.06)}; border-left: 3.5px solid ${odColor}; border: 1px solid ${hexToRgba(odColor, 0.25)}; border-left-width: 3.5px; border-left-color: ${odColor};`;
+        const osBoxStyle = `background: ${hexToRgba(osColor, 0.06)}; border-left: 3.5px solid ${osColor}; border: 1px solid ${hexToRgba(osColor, 0.25)}; border-left-width: 3.5px; border-left-color: ${osColor};`;
+        const badgeStyle = `background: ${hexToRgba(badgeColor, 0.12)}; color: ${badgeColor}; border: 1px solid ${hexToRgba(badgeColor, 0.35)};`;
+
+        // 動態反差按鈕文字顏色 (淺底自動反黑，深底自動反白)
+        const odTextColor = getContrastTextColor(odColor);
+        const osTextColor = getContrastTextColor(osColor);
+        const odBorder = (odTextColor === '#0f172a') ? `border: 1px solid ${hexToRgba(odColor, 0.6)};` : `border: 1px solid ${odColor};`;
+        const osBorder = (osTextColor === '#0f172a') ? `border: 1px solid ${hexToRgba(osColor, 0.6)};` : `border: 1px solid ${osColor};`;
+
+        const odBtnStyle = `background: ${odColor}; color: ${odTextColor}; ${odBorder} box-shadow: 0 1px 3px rgba(0,0,0,0.12); font-weight: bold;`;
+        const osBtnStyle = `background: ${osColor}; color: ${osTextColor}; ${osBorder} box-shadow: 0 1px 3px rgba(0,0,0,0.12); font-weight: bold;`;
+
         div.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+          <!-- 卡片頂部：姓名與商品徽章 -->
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; margin-bottom: 10px;">
             <div>
-              <div style="font-weight:bold; font-size:16.5px; color:#1e293b;">
+              <div style="font-weight:bold; font-size:17px; color:#2d3748;">
                 ${c.name} <span style="font-size:13px; color:#64748b; font-weight:normal;">(${c.code})</span>
               </div>
-              <div style="font-size:12.5px; color:#475569; margin-top:3px;">
+              <div style="font-size:12px; color:#64748b; margin-top:2px;">
                 生日：<b>${c.birthday || '-'}</b> ｜ 電話：<b>${c.phone || '-'}</b>
               </div>
             </div>
-            <span style="font-size:11.5px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold;">
-              ${c.product || '未分類'}
+            <span style="font-size:12px; padding:3px 10px; border-radius:4px; font-weight:bold; ${badgeStyle}">
+              ${displayProductName}
             </span>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-            <!-- 照片 1 (原 OD 欄位) -->
+          <!-- LIFF 客戶端同款：回診與時間資訊區塊 -->
+          <div style="margin-bottom: 12px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:3.5px solid #94a3b8; border-radius:5px; padding:6px 10px; font-size:12px; margin-bottom:6px;">
+              <div style="font-size:11px; color:#64748b; margin-bottom:1px;">最近回診檢查日</div>
+              <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${lastVisitStr}</div>
+            </div>
+
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; border-radius:5px; padding:6px 10px; font-size:12px; box-sizing:border-box; ${odBoxStyle}">
+                <div style="font-size:11px; color:#64748b; margin-bottom:1px;">${labels.odTitle}時間</div>
+                <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${odTimeStr}</div>
+              </div>
+              <div style="flex:1; border-radius:5px; padding:6px 10px; font-size:12px; box-sizing:border-box; ${osBoxStyle}">
+                <div style="font-size:11px; color:#64748b; margin-bottom:1px;">${labels.osTitle}時間</div>
+                <div style="font-size:13.5px; font-weight:600; color:#1e293b;">${osTimeStr}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 照片展示區 (自適應按鈕與比例) -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <!-- 照片 1 (OD) -->
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:13px; font-weight:bold; color:#166534; margin-bottom:6px;">${labels.odTitle}</div>
-              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
+              <div style="font-size:12.5px; font-weight:bold; color:${odColor}; margin-bottom:6px;">${labels.odTitle}</div>
+              <div style="width:100%; aspect-ratio:4/3; min-height:175px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOdPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.25);" ${hasOdPhoto ? `onclick="openImagePreview('${c.code}', 'OD', '${c.od_lens_photo}')"` : ''}>
                 ${hasOdPhoto 
                   ? `<img src="${c.od_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;">未拍攝</div>`}
               </div>
               <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn photo-btn-od" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OD')">
-                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <button type="button" class="photo-btn" style="${odBtnStyle} padding:8px 6px; font-size:12px; border-radius:5px;" onclick="triggerDirectUpload('${c.code}', 'OD')">
                   ${hasOdPhoto ? `重選 ${labels.odShort}` : `上傳 ${labels.odShort}`}
                 </button>
                 ${hasOdPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px; border-radius:5px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OD')">
+                    ✕
                   </button>
                 ` : ''}
               </div>
             </div>
 
-            <!-- 照片 2 (原 OS 欄位) -->
+            <!-- 照片 2 (OS) -->
             <div style="display:flex; flex-direction:column; align-items:center;">
-              <div style="font-size:13px; font-weight:bold; color:#1e40af; margin-bottom:6px;">${labels.osTitle}</div>
-              <div style="width:100%; height:135px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
+              <div style="font-size:12.5px; font-weight:bold; color:${osColor}; margin-bottom:6px;">${labels.osTitle}</div>
+              <div style="width:100%; aspect-ratio:4/3; min-height:175px; background:#0f172a; border:1.5px dashed #94a3b8; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:${hasOsPhoto ? 'pointer' : 'default'}; box-shadow:inset 0 1px 3px rgba(0,0,0,0.25);" ${hasOsPhoto ? `onclick="openImagePreview('${c.code}', 'OS', '${c.os_lens_photo}')"` : ''}>
                 ${hasOsPhoto 
                   ? `<img src="${c.os_lens_photo}" style="width:100%; height:100%; object-fit:contain;" title="點擊放大/刪除">` 
-                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;"><span style="font-size:20px; display:block; margin-bottom:2px; opacity:0.6;">📷</span>未拍攝</div>`}
+                  : `<div style="text-align:center; color:#94a3b8; font-size:12px;">未拍攝</div>`}
               </div>
               <div class="photo-action-btn-group" style="width:100%; margin-top:8px;">
-                <button type="button" class="photo-btn photo-btn-os" style="padding:8px 6px; font-size:12px;" onclick="triggerDirectUpload('${c.code}', 'OS')">
-                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <button type="button" class="photo-btn" style="${osBtnStyle} padding:8px 6px; font-size:12px; border-radius:5px;" onclick="triggerDirectUpload('${c.code}', 'OS')">
                   ${hasOsPhoto ? `重選 ${labels.osShort}` : `上傳 ${labels.osShort}`}
                 </button>
                 ${hasOsPhoto ? `
-                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  <button type="button" class="photo-btn photo-btn-delete" style="padding:8px 8px; border-radius:5px;" title="刪除照片" onclick="deleteLensPhoto('${c.code}', 'OS')">
+                    ✕
                   </button>
                 ` : ''}
               </div>
@@ -1857,7 +1096,7 @@
       const client = rawClients.find(c => c.code === currentPhotoTarget.code);
       if (!client) return alert("查無客戶資料！");
 
-      showLoading("照片壓縮與浮水印壓印中...", "正在安全上傳至雲端資料庫...");
+      showLoading("照片壓縮與浮水印壓印中...");
 
       try {
         const now = new Date();
@@ -1961,9 +1200,8 @@
       });
     }
 
-    function showLoading(text, progressText = "") {
+    function showLoading(text) {
       document.getElementById('loadingText').innerText = text;
-      document.getElementById('ocrProgress').innerText = progressText;
       document.getElementById('loadingOverlay').style.display = 'flex';
     }
 
