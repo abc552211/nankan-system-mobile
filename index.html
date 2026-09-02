@@ -753,9 +753,11 @@
           productConfigMap = setRes.data.productConfigMap;
         }
 
+        // ★ 加上 .range(0, 4999) 解除 1000 筆上限，完整讀取 1,117+ 筆客戶資料
         const { data, error } = await supabaseClient
           .from('customers')
-          .select('*');
+          .select('*')
+          .range(0, 4999);
 
         if (error) throw error;
 
