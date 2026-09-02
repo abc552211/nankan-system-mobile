@@ -136,8 +136,7 @@
   </script>
 
 
-  <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
 
   <style>
     :root {
@@ -726,42 +725,23 @@
   </div>
 
   <script>
-    const SUPABASE_URL = "https://wycoyydhcaeuabaelwdo.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Y295eWRoY2FldWFiYWVsd2RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDk2MDUsImV4cCI6MjEwMzQ4NTYwNX0.fkTge9-CHTIIYhQOfMpEmkRM9vOleM6rGd-h4sYDzjw";
+    // ★ 安全防護：Supabase 密鑰已徹底移入 Cloudflare Worker，前端零曝光
+    const API_BASE_URL = "https://mysystem-mobile-security.abc552211.workers.dev";
 
-    let supabaseClient = null;
     let rawClients = [];
     let currentPhotoTarget = { code: "", eye: "OD" };
     let productConfigMap = {};
 
-    if (window.supabase && window.supabase.createClient) {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-
     async function initMobileApp() {
       const statusEl = document.getElementById('syncStatus');
       try {
-        if (!supabaseClient) throw new Error("Supabase 初始化失敗");
+        const res = await fetch(`${API_BASE_URL}/api/init-data`);
+        if (!res.ok) throw new Error(`後端連線異常 (${res.status})`);
 
-        const { data: setRes } = await supabaseClient
-          .from('system_settings')
-          .select('data')
-          .eq('id', 'global_config')
-          .maybeSingle();
+        const data = await res.json();
+        productConfigMap = data.productConfigMap || {};
+        rawClients = data.customers || [];
 
-        if (setRes && setRes.data && setRes.data.productConfigMap) {
-          productConfigMap = setRes.data.productConfigMap;
-        }
-
-        // ★ 加上 .range(0, 4999) 解除 1000 筆上限，完整讀取 1,117+ 筆客戶資料
-        const { data, error } = await supabaseClient
-          .from('customers')
-          .select('*')
-          .range(0, 4999);
-
-        if (error) throw error;
-
-        rawClients = data || [];
         statusEl.innerText = `已連線 (${rawClients.length} 筆)`;
         statusEl.style.background = "#16a34a";
 
@@ -1088,15 +1068,18 @@
 
       try {
         const fieldKey = eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
-        const updateObj = {};
-        updateObj[fieldKey] = '';
 
-        const { error } = await supabaseClient
-          .from('customers')
-          .update(updateObj)
-          .eq('code', client.code);
+        const res = await fetch(`${API_BASE_URL}/api/update-photo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: client.code,
+            fieldKey: fieldKey,
+            photoData: ''
+          })
+        });
 
-        if (error) throw error;
+        if (!res.ok) throw new Error("後端刪除失敗");
 
         client[fieldKey] = '';
         filterPhotoClients();
@@ -1142,15 +1125,17 @@
         const base64 = await compressImageWithWatermark(file, watermarkInfo, 600, 0.65);
         const fieldKey = currentPhotoTarget.eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
 
-        const updateObj = {};
-        updateObj[fieldKey] = base64;
+        const res = await fetch(`${API_BASE_URL}/api/update-photo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: client.code,
+            fieldKey: fieldKey,
+            photoData: base64
+          })
+        });
 
-        const { error } = await supabaseClient
-          .from('customers')
-          .update(updateObj)
-          .eq('code', client.code);
-
-        if (error) throw error;
+        if (!res.ok) throw new Error("後端照片上傳失敗");
 
         client[fieldKey] = base64;
         filterPhotoClients();
