@@ -856,6 +856,7 @@
 
       const q = (inputEl ? inputEl.value : '').trim().toLowerCase();
       const qCleanDigits = q.replace(/\D/g, '');
+      const hasAlpha = /[a-z]/i.test(q); // 判斷搜尋詞是否帶有英文字母（例如客戶編號 A01216、身分證 H123...）
 
       checkClearBtnVisibility();
 
@@ -880,12 +881,31 @@
         const cBirthday = String(c.birthday || '').trim();
         const cBirthDigits = cBirthday.replace(/\D/g, '');
 
+        // 1. 客戶編號比對 (支援完整或局部文字搜尋)
         if (cCode.includes(q)) return true;
+        
+        // 2. 姓名比對
         if (cName.includes(q)) return true;
+        
+        // 3. 身分證號比對
         if (cId.includes(q)) return true;
-        if (qCleanDigits && cPhone.includes(qCleanDigits)) return true;
+
+        // 4. 生日格式文字比對 (如輸入 100/12/16 或 12/16)
         if (cBirthday.includes(q)) return true;
-        if (qCleanDigits && cBirthDigits.includes(qCleanDigits)) return true;
+
+        // 5. 若搜尋關鍵字帶有英文字母（如點擊小卡編號 A01216），停止純數字比對，避免誤抓電話與生日
+        if (!hasAlpha && qCleanDigits) {
+          // 純數字電話比對 (輸入手機前幾碼或後幾碼)
+          if (cPhone.includes(qCleanDigits)) return true;
+
+          // 生日 6~7 碼純數字比對 (如輸入 1001216 或 0870825)，採精確比對避免部分重疊字串誤判
+          if (qCleanDigits.length >= 6) {
+            if (cBirthDigits === qCleanDigits || cBirthDigits.padStart(7, '0') === qCleanDigits) return true;
+          } else if (qCleanDigits.length >= 4) {
+            // 4~5 碼只比對月日 (如輸入 1216 比對 12月16日)
+            if (cBirthDigits.endsWith(qCleanDigits)) return true;
+          }
+        }
 
         return false;
       });
