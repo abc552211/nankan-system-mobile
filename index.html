@@ -659,6 +659,60 @@
       margin-top: 4px;
       cursor: pointer;
     }
+
+    /* 回診小卡左滑手勢與扁平樣式 */
+    .doctor-group-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .doctor-group-header {
+      background: #f1f5f9;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .swipe-card-wrapper {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fee2e2;
+    }
+    .swipe-card-wrapper:last-child {
+      border-bottom: none;
+    }
+    .swipe-delete-bg {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #ef4444;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+      user-select: none;
+    }
+    .flat-visit-card {
+      position: relative;
+      background: #ffffff;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -700,7 +754,33 @@
 
       <div id="photoClientList" style="max-height: calc(100vh - 180px); overflow-y: auto;"></div>
     </div>
+
+    <!-- ★ 今日回診客戶扁平小卡清單 (位於照片搜尋下方) -->
+    <div class="app-card" style="border-top: 4px solid #0284c7; margin-top: 12px; margin-bottom: 12px;">
+      <div class="card-title" style="margin-bottom: 6px;">
+        <span style="display:flex; align-items:center; gap:5px;">
+          📅 <span>回診小卡名單</span>
+          <span id="visitCardTotalBadge" style="font-size:11px; background:#0284c7; color:#fff; border-radius:10px; padding:1px 7px;">0</span>
+        </span>
+        <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11.5px; height: 26px;" onclick="loadVisitCards()">
+          🔄 重新整理
+        </button>
+      </div>
+
+      <!-- 日期下拉選單 (+- 3 天內，預設今日) -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
+        <span style="font-size:12px; font-weight:bold; color:#475569; white-space:nowrap;">回診日期：</span>
+        <select id="visitDateSelect" class="input-field" style="margin-bottom:0; padding:6px 8px; font-size:13px; font-weight:bold; height:34px;" onchange="renderVisitCardsBySelectedDate()"></select>
+      </div>
+
+      <!-- 醫師分組小卡容器 -->
+      <div id="visitCardsGroupContainer" style="display:flex; flex-direction:column; gap:10px;">
+        <div style="text-align:center; padding:15px; color:#94a3b8; font-size:12.5px;">載入回診資料中...</div>
+      </div>
+    </div>
   </div>
+
+  <!-- 單一標準檔案上傳通道 (交由 iOS / Android 系統原生呼叫相機與相簿) -->
 
   <!-- 單一標準檔案上傳通道 (交由 iOS / Android 系統原生呼叫相機與相簿) -->
   <input type="file" id="mobilePhotoInput" accept="image/*" style="display:none;" onchange="handleMobilePhotoSelected(event)">
@@ -726,7 +806,7 @@
 
   <script>
     // ★ 安全防護：Supabase 密鑰已徹底移入 Cloudflare Worker，前端零曝光
-    const API_BASE_URL = "https://mysystem-mobile-security.abc552211.workers.dev";
+    const API_BASE_URL = "https://nakan-system-mobile-security.abc552211.workers.dev";
 
     let rawClients = [];
     let currentPhotoTarget = { code: "", eye: "OD" };
@@ -746,6 +826,8 @@
         statusEl.style.background = "#16a34a";
 
         filterPhotoClients();
+        initVisitDateOptions();
+        await loadVisitCards();
       } catch (err) {
         console.error("手機版連線初始化錯誤:", err);
         statusEl.innerText = "連線異常: " + (err.message || err);
@@ -1212,6 +1294,223 @@
 
     function hideLoading() {
       document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    // ==========================================
+    // 今日回診扁平小卡核心模組 (依醫師分類 + 月>日>年排序 + 左滑刪除)
+    // ==========================================
+    let visitRecordsList = [];
+
+    function initVisitDateOptions() {
+      const select = document.getElementById('visitDateSelect');
+      if (!select) return;
+
+      const daysMap = ["日", "一", "二", "三", "四", "五", "六"];
+      const now = new Date();
+      let html = "";
+
+      for (let i = -3; i <= 3; i++) {
+        const target = new Date();
+        target.setDate(now.getDate() + i);
+        const y = target.getFullYear();
+        const m = String(target.getMonth() + 1).padStart(2, '0');
+        const d = String(target.getDate()).padStart(2, '0');
+        const dayName = daysMap[target.getDay()];
+        const dateStr = `${y}/${m}/${d}`;
+
+        const isToday = (i === 0);
+        const label = isToday ? `${dateStr} (${dayName}) [今日]` : `${dateStr} (${dayName})`;
+        html += `<option value="${dateStr}" ${isToday ? 'selected' : ''}>${label}</option>`;
+      }
+      select.innerHTML = html;
+    }
+
+    async function loadVisitCards() {
+      try {
+        // ★ 自動觸發後端清除 3 天前的過期資料庫紀錄，完全無需手動
+        fetch(`${API_BASE_URL}/api/print-records-clean-old`, { method: 'DELETE' }).catch(() => {});
+
+        let data = [];
+        const res = await fetch(`${API_BASE_URL}/api/print-records`);
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+            const sRes = await supabaseClient.from('print_records').select('*');
+            data = sRes.data || [];
+          }
+        }
+
+        // 前端同時進行安全過濾：不呈現超過 3 天的資料
+        const now = new Date();
+        const expireThreshold = new Date();
+        expireThreshold.setDate(now.getDate() - 3);
+        const limitStr = `${expireThreshold.getFullYear()}/${String(expireThreshold.getMonth() + 1).padStart(2, '0')}/${String(expireThreshold.getDate()).padStart(2, '0')}`;
+
+        visitRecordsList = (data || []).filter(item => {
+          return (item.visit_date || '') >= limitStr;
+        });
+
+        renderVisitCardsBySelectedDate();
+      } catch (err) {
+        console.warn("讀取回診小卡異常:", err);
+      }
+    }
+
+    // 解析生日物件用於 月 > 日 > 年 排序
+    function parseBirthdayForSort(bStr) {
+      if (!bStr) return { m: 999, d: 999, y: 9999 };
+      const parts = String(bStr).split('/');
+      if (parts.length >= 3) {
+        return {
+          y: parseInt(parts[0], 10) || 0,
+          m: parseInt(parts[1], 10) || 0,
+          d: parseInt(parts[2], 10) || 0
+        };
+      }
+      return { m: 999, d: 999, y: 9999 };
+    }
+
+    function renderVisitCardsBySelectedDate() {
+      const container = document.getElementById('visitCardsGroupContainer');
+      const badge = document.getElementById('visitCardTotalBadge');
+      const selectedDate = document.getElementById('visitDateSelect')?.value || '';
+      if (!container) return;
+
+      const dateFiltered = visitRecordsList.filter(r => (r.visit_date || '') === selectedDate);
+      if (badge) badge.innerText = dateFiltered.length;
+
+      if (dateFiltered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12.5px;">此日期尚無任何回診列印小卡。</div>`;
+        return;
+      }
+
+      // 1. 依醫師分組
+      const doctorGroups = {};
+      dateFiltered.forEach(item => {
+        const dr = (item.doctor || '未指定醫師').trim();
+        if (!doctorGroups[dr]) doctorGroups[dr] = [];
+        doctorGroups[dr].push(item);
+      });
+
+      container.innerHTML = '';
+
+      // 2. 針對各醫師內的客戶依生日排序 (月 > 日 > 年)
+      Object.keys(doctorGroups).forEach(drName => {
+        const clients = doctorGroups[drName];
+        clients.sort((a, b) => {
+          const pA = parseBirthdayForSort(a.birthday);
+          const pB = parseBirthdayForSort(b.birthday);
+          if (pA.m !== pB.m) return pA.m - pB.m;
+          if (pA.d !== pB.d) return pA.d - pB.d;
+          return pA.y - pB.y;
+        });
+
+        const groupBox = document.createElement('div');
+        groupBox.className = 'doctor-group-box';
+
+        let cardsHtml = '';
+        clients.forEach(c => {
+          cardsHtml += `
+            <div class="swipe-card-wrapper" id="swipe-wrap-${c.id}">
+              <div class="swipe-delete-bg" onclick="confirmDeleteVisitCard(${c.id}, '${c.name}', event)">完成刪除</div>
+              <div class="flat-visit-card" id="card-inner-${c.id}" 
+                   onclick="jumpToPhotoUpload('${c.code}')">
+                <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+                  <span style="font-size:15px; font-weight:bold; color:#0f172a; white-space:nowrap;">${c.name}</span>
+                  <span style="font-size:11.5px; color:#475569; white-space:nowrap;">🎂 ${c.birthday || '-'}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="background:#e0f2fe; color:#0284c7; border:1px solid #bae6fd; font-size:11px; font-weight:bold; padding:2px 6px; border-radius:4px; white-space:nowrap;">
+                    ${c.product || 'OK'}
+                  </span>
+                  <span style="font-size:13px; color:#94a3b8;">›</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        groupBox.innerHTML = `
+          <div class="doctor-group-header">
+            <span>👨‍⚕️ ${drName}</span>
+            <span style="font-size:11px; background:#e2e8f0; color:#475569; padding:1px 6px; border-radius:10px;">${clients.length} 人</span>
+          </div>
+          <div>${cardsHtml}</div>
+        `;
+        container.appendChild(groupBox);
+
+        // 綁定觸控左滑手勢
+        clients.forEach(c => {
+          bindSwipeGesture(c.id, c.name);
+        });
+      });
+    }
+
+    // 左滑手勢監聽 (滑動超過 60px 展開刪除按鈕，點擊完成紀錄並自後端移除)
+    function bindSwipeGesture(id, clientName) {
+      const cardEl = document.getElementById(`card-inner-${id}`);
+      if (!cardEl) return;
+
+      let startX = 0;
+      let currentX = 0;
+      let isSwiping = false;
+
+      cardEl.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+      }, { passive: true });
+
+      cardEl.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+        currentX = e.touches[0].clientX;
+        const diffX = currentX - startX;
+        // 只能向左滑動最多 -80px
+        if (diffX < 0 && diffX >= -80) {
+          cardEl.style.transform = `translateX(${diffX}px)`;
+        }
+      }, { passive: true });
+
+      cardEl.addEventListener('touchend', (e) => {
+        isSwiping = false;
+        const diffX = currentX - startX;
+        if (diffX < -50) {
+          cardEl.style.transform = `translateX(-80px)`;
+        } else {
+          cardEl.style.transform = `translateX(0px)`;
+        }
+      });
+    }
+
+    // 點擊小卡跳轉並展開照片上傳介面
+    function jumpToPhotoUpload(code) {
+      const searchInput = document.getElementById('clientSearchInput');
+      if (searchInput) {
+        searchInput.value = code;
+        filterPhotoClients();
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // 左滑刪除確認與遠端同步
+    async function confirmDeleteVisitCard(id, name, event) {
+      if (event) event.stopPropagation();
+      if (!confirm(`確定【${name}】已完成回診，並自今日清單中移除嗎？`)) {
+        const cardInner = document.getElementById(`card-inner-${id}`);
+        if (cardInner) cardInner.style.transform = 'translateX(0px)';
+        return;
+      }
+
+      const wrap = document.getElementById(`swipe-wrap-${id}`);
+      if (wrap) wrap.style.display = 'none';
+
+      try {
+        await fetch(`${API_BASE_URL}/api/print-records/${id}`, { method: 'DELETE' }).catch(() => {});
+        visitRecordsList = visitRecordsList.filter(r => r.id !== id);
+        renderVisitCardsBySelectedDate();
+      } catch (err) {
+        alert("刪除失敗：" + err.message);
+      }
     }
 
     document.addEventListener("DOMContentLoaded", initMobileApp);
