@@ -665,7 +665,45 @@
       cursor: pointer;
     }
 
-    /* 回診小卡左滑手勢與扁平樣式 */
+    /* 滑動開關 (Toggle Switch) */
+    .switch-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .switch-wrap input {
+      display: none;
+    }
+    .switch-slider {
+      width: 38px;
+      height: 20px;
+      background-color: #cbd5e1;
+      border-radius: 20px;
+      position: relative;
+      transition: background-color 0.25s ease;
+      display: inline-block;
+    }
+    .switch-slider::before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      transition: transform 0.25s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .switch-wrap input:checked + .switch-slider {
+      background-color: #5a8264;
+    }
+    .switch-wrap input:checked + .switch-slider::before {
+      transform: translateX(18px);
+    }
+
     .doctor-group-box {
       background: #ffffff;
       border: 1px solid #d0ded2;
@@ -767,15 +805,26 @@
           📅 <span>回診小卡名單</span>
           <span id="visitCardTotalBadge" style="font-size:11px; background:#5a8264; color:#fff; border-radius:10px; padding:1px 7px;">0</span>
         </span>
-        <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11.5px; height: 26px;" onclick="loadVisitCards()">
-          🔄 重新整理
-        </button>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <!-- 顯示全卡別滑動開關 -->
+          <label class="switch-wrap" title="開關：預設僅看 OK 塑型片，開啟顯示全部類別">
+            <span id="cardSwitchLabel" style="font-size:11.5px; font-weight:bold; color:#5a8264;">OK 塑型片</span>
+            <input type="checkbox" id="showAllCardsToggle" onchange="toggleCardCategoryMode()">
+            <span class="switch-slider"></span>
+          </label>
+          <button type="button" class="btn btn-secondary" style="padding: 3px 8px; font-size: 11.5px; height: 26px;" onclick="loadVisitCards()">
+            🔄 重新整理
+          </button>
+        </div>
       </div>
 
-      <!-- 日期下拉選單 (+- 3 天內，預設今日) -->
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
-        <span style="font-size:12px; font-weight:bold; color:#475569; white-space:nowrap;">回診日期：</span>
-        <select id="visitDateSelect" class="input-field" style="margin-bottom:0; padding:6px 8px; font-size:13px; font-weight:bold; height:34px;" onchange="renderVisitCardsBySelectedDate()"></select>
+      <!-- 日期下拉選單 (+- 3 天內，預設今日) + 日期旁顯示共 X 人 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #d0ded2;">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+          <span style="font-size:12px; font-weight:bold; color:#475569; white-space:nowrap;">回診日期：</span>
+          <select id="visitDateSelect" class="input-field" style="margin-bottom:0; padding:6px 8px; font-size:13px; font-weight:bold; height:34px; flex:1; min-width:0;" onchange="renderVisitCardsBySelectedDate()"></select>
+        </div>
+        <span id="visitDatePersonCount" style="margin-left:10px; font-size:12px; font-weight:bold; color:#5a8264; background:#e9efe9; padding:3px 10px; border-radius:12px; white-space:nowrap;">共 0 人</span>
       </div>
 
       <!-- 醫師分組小卡容器 -->
@@ -1396,17 +1445,43 @@
       return { m: 999, d: 999, y: 9999 };
     }
 
+    // 切換「OK 塑型片 / 顯示全部」開關
+    function toggleCardCategoryMode() {
+      const toggle = document.getElementById('showAllCardsToggle');
+      const label = document.getElementById('cardSwitchLabel');
+      if (label) {
+        label.innerText = toggle && toggle.checked ? "顯示全部" : "OK 塑型片";
+        label.style.color = toggle && toggle.checked ? "#2c3e50" : "#5a8264";
+      }
+      renderVisitCardsBySelectedDate();
+    }
+
     function renderVisitCardsBySelectedDate() {
       const container = document.getElementById('visitCardsGroupContainer');
       const badge = document.getElementById('visitCardTotalBadge');
+      const countEl = document.getElementById('visitDatePersonCount');
       const selectedDate = document.getElementById('visitDateSelect')?.value || '';
+      const showAll = document.getElementById('showAllCardsToggle')?.checked || false;
       if (!container) return;
 
-      const dateFiltered = visitRecordsList.filter(r => (r.visit_date || '') === selectedDate);
+      // 1. 日期篩選
+      let dateFiltered = visitRecordsList.filter(r => (r.visit_date || '') === selectedDate);
+
+      // 2. 類別篩選 (預設僅看 OK 塑型片；開啟開關則顯示全部)
+      if (!showAll) {
+        dateFiltered = dateFiltered.filter(r => {
+          const type = (r.card_type || '').toLowerCase();
+          const prod = (r.product || '').toLowerCase();
+          return type.includes('ok') || type.includes('塑型') || prod.includes('ok') || prod.includes('塑型') || (!type && !prod);
+        });
+      }
+
+      // 3. 更新標題徽章與日期旁邊的「共 X 人」
       if (badge) badge.innerText = dateFiltered.length;
+      if (countEl) countEl.innerText = `共 ${dateFiltered.length} 人`;
 
       if (dateFiltered.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12.5px;">此日期尚無任何回診列印小卡。</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12.5px;">${showAll ? '此日期尚無任何回診列印小卡。' : '此日期尚無 OK 塑型片回診小卡 (可開啟上方開關查看全部)。'}</div>`;
         return;
       }
 
