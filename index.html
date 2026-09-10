@@ -868,6 +868,14 @@
 
     async function initMobileApp() {
       const statusEl = document.getElementById('syncStatus');
+      const photoContainer = document.getElementById('photoClientList');
+      if (photoContainer) {
+        photoContainer.innerHTML = `
+          <div style="text-align:center; padding:50px 15px; color:#5a8264;">
+            <div class="spinner" style="border-color: rgba(90,130,100,0.2); border-top-color:#5a8264; margin: 0 auto 12px auto;"></div>
+            <div style="font-size:13.5px; font-weight:bold;">正在連線載入客戶名冊...</div>
+          </div>`;
+      }
       try {
         const res = await fetch(`${API_BASE_URL}/api/init-data`);
         if (!res.ok) throw new Error(`後端連線異常 (${res.status})`);
@@ -910,9 +918,18 @@
 
       const q = (inputEl ? inputEl.value : '').trim().toLowerCase();
       const qCleanDigits = q.replace(/\D/g, '');
-      const hasAlpha = /[a-z]/i.test(q); // 判斷搜尋詞是否帶有英文字母（例如客戶編號 A01216、身分證 H123...）
+      const hasAlpha = /[a-z]/i.test(q);
 
       checkClearBtnVisibility();
+
+      // 當使用者輸入關鍵字時，短暫呈現極速搜尋動畫反饋
+      if (q && container && rawClients.length > 500) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:30px 15px; color:#5a8264;">
+            <div class="spinner" style="border-color: rgba(90,130,100,0.2); border-top-color:#5a8264; margin: 0 auto 8px auto; width:26px; height:26px; border-width:3px;"></div>
+            <div style="font-size:12px; font-weight:bold;">正在檢索名單中...</div>
+          </div>`;
+      }
 
       if (!q) {
         if (countEl) countEl.style.display = 'none';
@@ -1278,7 +1295,12 @@
           date: dateStr
         };
 
-        const base64 = await compressImageWithWatermark(file, watermarkInfo, 600, 0.65);
+        const rawBase64 = await compressImageWithWatermark(file, watermarkInfo, 600, 0.65);
+
+        // ★ 核心同步：將上傳時間戳記 (YYYY-MM-DD) 嵌入 Base64 字串開頭，確保電腦端能精確計算滿一年自動轉佔位圖
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const base64WithTime = rawBase64.replace('data:image/jpeg;base64,', `data:image/jpeg;uploaded=${todayIso};base64,`);
+
         const fieldKey = currentPhotoTarget.eye === 'OD' ? 'od_lens_photo' : 'os_lens_photo';
 
         const res = await fetch(`${API_BASE_URL}/api/update-photo`, {
@@ -1287,16 +1309,16 @@
           body: JSON.stringify({
             code: client.code,
             fieldKey: fieldKey,
-            photoData: base64
+            photoData: base64WithTime
           })
         });
 
         if (!res.ok) throw new Error("後端照片上傳失敗");
 
-        client[fieldKey] = base64;
+        client[fieldKey] = base64WithTime;
         filterPhotoClients();
 
-        alert(`客戶【${client.name} (${client.code})】${photoTagText} 上傳成功！\n已壓印浮水印：${maskedName} ${photoTagText} ${dateStr}`);
+        alert(`客戶【${client.name} (${client.code})】${photoTagText} 上傳成功！\n已嵌入時間標記：${todayIso}\n浮水印：${maskedName} ${photoTagText} ${dateStr}`);
       } catch (err) {
         console.error("照片上傳失敗:", err);
         alert("上傳失敗: " + (err.message || err));
