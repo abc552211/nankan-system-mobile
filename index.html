@@ -844,11 +844,18 @@
     <div id="loadingText">處理中...</div>
   </div>
 
-  <!-- 大圖預覽彈窗 (含刪除照片按鈕) -->
-  <div id="imagePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; flex-direction: column;">
-    <span onclick="closeImagePreview()" style="position: absolute; top: 16px; right: 20px; color: white; font-size: 30px; font-weight: bold; cursor: pointer; user-select: none;">✕</span>
-    <img id="previewModalImg" src="" style="max-width: 95%; max-height: 75vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); object-fit: contain;">
-    <div style="margin-top: 14px; display: flex; gap: 10px;">
+  <!-- 大圖預覽彈窗 (支援雙指放大、平移、雙擊還原) -->
+  <div id="imagePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; touch-action: none; flex-direction: column; justify-content: space-between; padding: 16px 12px 24px 12px; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; z-index: 10;">
+      <span style="color: #94a3b8; font-size: 12px;">雙指可捏合縮放 / 雙擊放大</span>
+      <span onclick="closeImagePreview()" style="color: white; font-size: 28px; font-weight: bold; cursor: pointer; padding: 4px 10px; line-height: 1; user-select: none;">✕</span>
+    </div>
+    
+    <div id="zoomContainer" style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;">
+      <img id="previewModalImg" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; transform-origin: center center; will-change: transform; transition: transform 0.1s ease-out;">
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: center; width: 100%; z-index: 10; padding-top: 10px;">
       <button type="button" class="btn" style="background:#dc2626; color:white; font-size:13px; padding:8px 16px;" onclick="deleteCurrentModalPhoto()">
         刪除此照片
       </button>
@@ -1004,8 +1011,10 @@
       const modal = document.getElementById('imagePreviewModal');
       const modalImg = document.getElementById('previewModalImg');
       if (modal && modalImg) {
+        resetZoomState();
         modalImg.src = imgSrc;
         modal.style.display = 'flex';
+        initPinchZoom();
       }
     }
 
@@ -1014,12 +1023,158 @@
       const modalImg = document.getElementById('previewModalImg');
       if (modal) modal.style.display = 'none';
       if (modalImg) modalImg.src = '';
+      resetZoomState();
     }
 
     async function deleteCurrentModalPhoto() {
       if (!currentPhotoTarget.code || !currentPhotoTarget.eye) return;
       closeImagePreview();
       await deleteLensPhoto(currentPhotoTarget.code, currentPhotoTarget.eye);
+    }
+
+    // ==========================================
+    // 手機版大圖雙指手勢縮放與平移核心引擎 (Pinch-to-Zoom)
+    // ==========================================
+    let zoomScale = 1;
+    let zoomPosX = 0;
+    let zoomPosY = 0;
+    let initialDistance = 0;
+    let startPanX = 0;
+    let startPanY = 0;
+    let isPinching = false;
+    let isPanning = false;
+    let lastTapTime = 0;
+    let isZoomInitialized = false;
+
+    function resetZoomState() {
+      zoomScale = 1;
+      zoomPosX = 0;
+      zoomPosY = 0;
+      updateZoomTransform();
+    }
+
+    function updateZoomTransform() {
+      const img = document.getElementById('previewModalImg');
+      if (img) {
+        img.style.transform = `translate(${zoomPosX}px, ${zoomPosY}px) scale(${zoomScale})`;
+      }
+    }
+
+    function getTouchesDistance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function initPinchZoom() {
+      if (isZoomInitialized) return;
+      const container = document.getElementById('zoomContainer');
+      const img = document.getElementById('previewModalImg');
+      if (!container || !img) return;
+
+      let lastPinchCenter = { x: 0, y: 0 };
+
+      // 取得雙指即時中心點座標 (以畫面正中為原點)
+      const getTouchesCenter = (touches, rect) => {
+        return {
+          x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left - rect.width / 2,
+          y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top - rect.height / 2
+        };
+      };
+
+      // 彈簧阻尼平滑回彈函式 (全部放開時平滑彈回 1 倍正中心)
+      const springBackToReset = () => {
+        img.style.transition = 'transform 0.28s cubic-bezier(0.25, 1, 0.5, 1)';
+        zoomScale = 1;
+        zoomPosX = 0;
+        zoomPosY = 0;
+        updateZoomTransform();
+        setTimeout(() => {
+          if (img) img.style.transition = 'none';
+        }, 280);
+      };
+
+      // 1. 觸控開始 (移除過渡動畫，確保雙指移動完全貼手零延遲)
+      container.addEventListener('touchstart', (e) => {
+        img.style.transition = 'none';
+        const rect = container.getBoundingClientRect();
+
+        if (e.touches.length === 2) {
+          isPinching = true;
+          isPanning = false;
+          initialDistance = getTouchesDistance(e.touches);
+          lastPinchCenter = getTouchesCenter(e.touches, rect);
+        } else if (e.touches.length === 1) {
+          // 若圖片處於放大狀態，單指接觸可平移
+          if (zoomScale > 1.05) {
+            isPanning = true;
+            isPinching = false;
+            startPanX = e.touches[0].clientX - zoomPosX;
+            startPanY = e.touches[0].clientY - zoomPosY;
+          }
+        }
+      }, { passive: false });
+
+      // 2. 觸控移動 (★ 雙指未放開時，縮放＋上下左右任意平移同步進行)
+      container.addEventListener('touchmove', (e) => {
+        const rect = container.getBoundingClientRect();
+
+        if (isPinching && e.touches.length === 2) {
+          e.preventDefault();
+          const currentDistance = getTouchesDistance(e.touches);
+          const currentCenter = getTouchesCenter(e.touches, rect);
+
+          if (initialDistance > 0) {
+            const factor = currentDistance / initialDistance;
+            const newScale = Math.min(Math.max(0.7, zoomScale * factor), 6); // 支援 0.7x ~ 6x
+
+            // 1. 計算縮放產生的焦點偏移
+            const scaleRatio = newScale / zoomScale;
+            zoomPosX = currentCenter.x - (currentCenter.x - zoomPosX) * scaleRatio;
+            zoomPosY = currentCenter.y - (currentCenter.y - zoomPosY) * scaleRatio;
+
+            // 2. ★ 核心同步：累加雙指在螢幕上「上下左右滑動」的實質位移量，畫面貼手跟隨！
+            const panDeltaX = currentCenter.x - lastPinchCenter.x;
+            const panDeltaY = currentCenter.y - lastPinchCenter.y;
+            zoomPosX += panDeltaX;
+            zoomPosY += panDeltaY;
+
+            zoomScale = newScale;
+            initialDistance = currentDistance;
+            lastPinchCenter = currentCenter;
+
+            updateZoomTransform();
+          }
+        } else if (isPanning && e.touches.length === 1 && zoomScale > 1.05) {
+          // 放大期間單指平移
+          e.preventDefault();
+          zoomPosX = e.touches[0].clientX - startPanX;
+          zoomPosY = e.touches[0].clientY - startPanY;
+          updateZoomTransform();
+        }
+      }, { passive: false });
+
+      // 3. 觸控結束 (雙指轉單指不卡頓，全部放開時 100% 彈回原位)
+      container.addEventListener('touchend', (e) => {
+        // 從雙指拿開一隻、留一隻時，無縫銜接單指拖曳
+        if (e.touches.length === 1 && zoomScale > 1.05) {
+          isPinching = false;
+          isPanning = true;
+          startPanX = e.touches[0].clientX - zoomPosX;
+          startPanY = e.touches[0].clientY - zoomPosY;
+        }
+
+        // ★ 當手指全部離開螢幕（放開）時，自動平滑彈回原位
+        if (e.touches.length === 0) {
+          isPinching = false;
+          isPanning = false;
+          if (zoomScale !== 1 || zoomPosX !== 0 || zoomPosY !== 0) {
+            springBackToReset();
+          }
+        }
+      });
+
+      isZoomInitialized = true;
     }
 
     function getPhotoLabelsByProduct(productStr) {
