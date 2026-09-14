@@ -1605,7 +1605,6 @@
       const select = document.getElementById('visitDateSelect');
       if (!select) return;
 
-      const previousSelectedDate = select.value;
       const daysMap = ["日", "一", "二", "三", "四", "五", "六"];
       const now = new Date();
       let html = "";
@@ -1628,9 +1627,8 @@
       }
       select.innerHTML = html;
 
-      // 若之前選擇的日期仍在選項內則保留，否則預設鎖定最新 [今日]
-      const exists = Array.from(select.options).some(opt => opt.value === previousSelectedDate);
-      select.value = exists && previousSelectedDate ? previousSelectedDate : todayStr;
+      // 每次執行重新整理時，強制自動選回最新的 [今日]
+      select.value = todayStr;
     }
 
     async function loadVisitCards() {
