@@ -1093,8 +1093,88 @@
       const labels = getPhotoLabelsByProduct(c.product);
 
       const lastVisitStr = c.lastVisit || '-';
-      const odTimeStr = c.odDuration || c.odChangeDate || '-';
-      const osTimeStr = c.osDuration || c.osChangeDate || '-';
+
+      // ★ 取件日期與鏡片使用時間計算函式（只要超過整月 1 天即無條件進位；滿 12 個月年數+1、月歸 0）
+      function calculateLensDuration(dateStr, fallbackDuration) {
+        if (!dateStr || String(dateStr).trim() === '' || String(dateStr).trim() === '-') {
+          return { duration: fallbackDuration || '-', formattedDate: '-' };
+        }
+
+        const cleanedStr = String(dateStr).trim().replace(/\./g, '/').replace(/-/g, '/');
+        const parts = cleanedStr.split('/');
+        let pickDate = null;
+
+        if (parts.length === 3) {
+          let y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const d = parseInt(parts[2], 10);
+          if (y < 1900) y += 1911; // 支援民國年
+          pickDate = new Date(y, m, d);
+        } else {
+          const parsed = new Date(cleanedStr);
+          if (!isNaN(parsed.getTime())) pickDate = parsed;
+        }
+
+        if (!pickDate || isNaN(pickDate.getTime())) {
+          return { duration: fallbackDuration || dateStr, formattedDate: dateStr };
+        }
+
+        const yStr = pickDate.getFullYear();
+        const mStr = String(pickDate.getMonth() + 1).padStart(2, '0');
+        const dStr = String(pickDate.getDate()).padStart(2, '0');
+        const formattedDate = `${yStr}/${mStr}/${dStr}`;
+
+        const refDate = new Date();
+        refDate.setHours(0, 0, 0, 0);
+        pickDate.setHours(0, 0, 0, 0);
+
+        if (refDate < pickDate) {
+          return { duration: '0y-0m', formattedDate };
+        }
+
+        let years = refDate.getFullYear() - pickDate.getFullYear();
+        let months = refDate.getMonth() - pickDate.getMonth();
+        let days = refDate.getDate() - pickDate.getDate();
+
+        if (days < 0) {
+          months -= 1;
+          const prevMonthLastDay = new Date(refDate.getFullYear(), refDate.getMonth(), 0).getDate();
+          days += prevMonthLastDay;
+        }
+
+        if (months < 0) {
+          years -= 1;
+          months += 12;
+        }
+
+        // 規則：只要超過整月 1 天，月份即無條件進入至下個月
+        if (days > 0) {
+          months += 1;
+        }
+
+        // 滿 12 個月時自動年數 +1、月份歸 0
+        if (months >= 12) {
+          years += Math.floor(months / 12);
+          months = months % 12;
+        }
+
+        return {
+          duration: `${years}y-${months}m`,
+          formattedDate
+        };
+      }
+
+      // 解析 OD / OS 取件日與使用時間
+      const rawOdDate = c.odChangeDate || c.odPickDate || c.odDate || c.odDeliveryDate || '';
+      const rawOsDate = c.osChangeDate || c.osPickDate || c.osDate || c.osDeliveryDate || '';
+
+      const odResult = calculateLensDuration(rawOdDate, c.odDuration);
+      const osResult = calculateLensDuration(rawOsDate, c.osDuration);
+
+      const odTimeStr = odResult.duration;
+      const osTimeStr = osResult.duration;
+      const odPickDateDisplay = odResult.formattedDate;
+      const osPickDateDisplay = osResult.formattedDate;
 
       const odBoxStyle = `background: ${hexToRgba(odColor, 0.06)}; border: 1px solid ${hexToRgba(odColor, 0.25)}; border-left: 3px solid ${odColor};`;
       const osBoxStyle = `background: ${hexToRgba(osColor, 0.06)}; border: 1px solid ${hexToRgba(osColor, 0.25)}; border-left: 3px solid ${osColor};`;
@@ -1124,7 +1204,7 @@
           </span>
         </div>
 
-        <!-- 緊湊型資訊列：回診日與鏡片時間並排在同一行，大幅縮減高度 -->
+        <!-- 緊湊型資訊列：回診日與鏡片時間並排在同一行，並顯示低調取件日期 -->
         <div style="display:flex; gap:6px; margin-bottom: 8px; width: 100%;">
           <div style="flex:1.1; min-width:0; background:#f8fafc; border:1px solid #e2e8f0; border-left:3px solid #94a3b8; border-radius:4px; padding:4px 6px; box-sizing:border-box;">
             <div style="font-size:10px; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">最近回診日</div>
@@ -1133,10 +1213,12 @@
           <div style="flex:1; min-width:0; border-radius:4px; padding:4px 6px; box-sizing:border-box; ${odBoxStyle}">
             <div style="font-size:10px; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${labels.odTitle}時間</div>
             <div style="font-size:12.5px; font-weight:600; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${odTimeStr}</div>
+            <div style="font-size:10px; color:#64748b; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="取件日：${odPickDateDisplay}">取件：${odPickDateDisplay}</div>
           </div>
           <div style="flex:1; min-width:0; border-radius:4px; padding:4px 6px; box-sizing:border-box; ${osBoxStyle}">
             <div style="font-size:10px; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${labels.osTitle}時間</div>
             <div style="font-size:12.5px; font-weight:600; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${osTimeStr}</div>
+            <div style="font-size:10px; color:#64748b; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="取件日：${osPickDateDisplay}">取件：${osPickDateDisplay}</div>
           </div>
         </div>
 
