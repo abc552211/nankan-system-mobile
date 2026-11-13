@@ -1779,6 +1779,43 @@
       select.value = todayStr;
     }
 
+    // 主系統 Worker 備援網址 (確保行動端 Worker 若未配置 print-records 路由時能自動無縫接手)
+    const MAIN_API_BASE_URL = "https://nakan-system-security.abc552211.workers.dev";
+
+    // 與主程式 100% 同步的 OK 塑型片判定邏輯 (認得 二代、BF、標準、優克、AD 等商品代碼)
+    function isMobileClientOkLens(productName, cardTypeStr) {
+      if (cardTypeStr) {
+        const ct = String(cardTypeStr).trim().toLowerCase();
+        if (ct.includes('ok') || ct.includes('塑型')) return true;
+        if (ct.includes('離焦') || ct.includes('眼鏡') || ct.includes('日拋') || ct.includes('rgp') || ct.includes('硬式')) return false;
+      }
+      if (!productName) return true;
+      const p = String(productName).trim();
+      const conf = productConfigMap[p] || {};
+      if (conf.cardType) {
+        const cType = String(conf.cardType).trim().toLowerCase();
+        return cType === 'ok' || cType === 'ok 塑型片' || cType === 'ok塑型片';
+      }
+      if (p.includes('HOYA') || p.includes('新樂學') || p.includes('離焦') || p.includes('眼鏡') || p.includes('日拋')) {
+        return false;
+      }
+      return true;
+    }
+
+    // 統一格式化日期字串為 YYYY/MM/DD，避免單雙位數或括號造成比對落差
+    function normalizeVisitDateStr(rawDate) {
+      if (!rawDate) return '';
+      let s = String(rawDate).split('(')[0].trim().replace(/-/g, '/');
+      const parts = s.split('/');
+      if (parts.length === 3) {
+        const y = parts[0].trim();
+        const m = String(parseInt(parts[1], 10) || 1).padStart(2, '0');
+        const d = String(parseInt(parts[2], 10) || 1).padStart(2, '0');
+        return `${y}/${m}/${d}`;
+      }
+      return s;
+    }
+
     async function loadVisitCards() {
       const container = document.getElementById('visitCardsGroupContainer');
       resetAllOpenedCards();
@@ -1796,18 +1833,35 @@
       }
 
       try {
-        // ★ 自動觸發後端清除 3 天前的過期資料庫紀錄
-        fetch(`${API_BASE_URL}/api/print-records-clean-old`, { method: 'DELETE' }).catch(() => {});
+        // ★ 注意：不可在此無參數呼叫 print-records-clean-old，否則主程式保留 100 天的統計報表會被誤刪為 3 天！
 
         let data = [];
-        const res = await fetch(`${API_BASE_URL}/api/print-records`);
-        if (res.ok) {
-          data = await res.json();
-        } else {
-          if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const sRes = await supabaseClient.from('print_records').select('*');
-            data = sRes.data || [];
+        let fetchedOk = false;
+
+        // 1. 優先向主系統 Worker 讀取回診暫存紀錄
+        try {
+          const res = await fetch(`https://nakan-system-security.abc552211.workers.dev/api/print-records`);
+          if (res.ok) {
+            const json = await res.json();
+            if (Array.isArray(json)) {
+              data = json;
+              fetchedOk = true;
+            }
           }
+        } catch (e) {}
+
+        // 2. ★ 自動備援：若行動端 Worker 未設定該路由或回傳空，自動向主系統 Worker 讀取
+        if (!fetchedOk || data.length === 0) {
+          try {
+            const fallbackRes = await fetch(`${MAIN_API_BASE_URL}/api/print-records`);
+            if (fallbackRes.ok) {
+              const fallbackJson = await fallbackRes.json();
+              if (Array.isArray(fallbackJson)) {
+                data = fallbackJson;
+                fetchedOk = true;
+              }
+            }
+          } catch (e2) {}
         }
 
         const now = new Date();
@@ -1815,7 +1869,10 @@
         expireThreshold.setDate(now.getDate() - 3);
         const limitStr = `${expireThreshold.getFullYear()}/${String(expireThreshold.getMonth() + 1).padStart(2, '0')}/${String(expireThreshold.getDate()).padStart(2, '0')}`;
 
-        visitRecordsList = (data || []).filter(item => {
+        visitRecordsList = (data || []).map(item => ({
+          ...item,
+          visit_date: normalizeVisitDateStr(item.visit_date)
+        })).filter(item => {
           return (item.visit_date || '') >= limitStr;
         });
 
@@ -1859,20 +1916,16 @@
       const container = document.getElementById('visitCardsGroupContainer');
       const badge = document.getElementById('visitCardTotalBadge');
       const countEl = document.getElementById('visitDatePersonCount');
-      const selectedDate = document.getElementById('visitDateSelect')?.value || '';
+      const selectedDate = normalizeVisitDateStr(document.getElementById('visitDateSelect')?.value || '');
       const showAll = document.getElementById('showAllCardsToggle')?.checked || false;
       if (!container) return;
 
       // 1. 日期篩選
-      let dateFiltered = visitRecordsList.filter(r => (r.visit_date || '') === selectedDate);
+      let dateFiltered = visitRecordsList.filter(r => normalizeVisitDateStr(r.visit_date) === selectedDate);
 
-      // 2. 類別篩選
+      // 2. 類別篩選 (使用與主系統一致的 productConfigMap 智慧識別)
       if (!showAll) {
-        dateFiltered = dateFiltered.filter(r => {
-          const type = (r.card_type || '').toLowerCase();
-          const prod = (r.product || '').toLowerCase();
-          return type.includes('ok') || type.includes('塑型') || prod.includes('ok') || prod.includes('塑型') || (!type && !prod);
-        });
+        dateFiltered = dateFiltered.filter(r => isMobileClientOkLens(r.product, r.card_type));
       }
 
       // 3. 更新計數
